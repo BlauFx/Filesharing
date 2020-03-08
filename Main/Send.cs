@@ -1,6 +1,6 @@
+using System;
 using System.IO;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 using static System.Console;
 
@@ -25,27 +25,11 @@ namespace BFs
 
         private async void SendFile(string IP, string file)
         {
-            string x = null;
-
             if (file.StartsWith("\""))
-            {
-                x = file.Substring(1, file.Length - 1);
-                file = x;
-            }
+                file = file[1..];
 
             if (file.EndsWith("\""))
-            {
-                if (!(x == null))
-                {
-                    string x2 = x.Substring(0, file.Length - 1);
-                    file = x2;
-                }
-                else
-                {
-                    string x2 = file.Substring(0, file.Length - 1);
-                    file = x2;
-                }
-            }
+                file = file[0..^1];
 
             FileInfo fi = new FileInfo(file);
 
@@ -55,7 +39,7 @@ namespace BFs
                 {
                     WriteLine("Trying to connect...");
 
-                    TcpClient client = new TcpClient(IP, 1604);
+                    TcpClient client = new TcpClient(IP, 1604) { ReceiveTimeout = int.MaxValue };
                     NetworkStream nwStream = client.GetStream();
 
                     if (client.Connected)
@@ -69,8 +53,8 @@ namespace BFs
                         await Task.Delay(1000);
 
                         using (FileStream strm = fi.OpenRead())
-                        { 
-                            await InternetProtocol.TransportAsync(InternetProtocol.TransportWay.SendAsync, InternetProtocol.IPVersion.IPV4, nwStream, strm, buffersize, fi.Length);
+                        {
+                            await InternetProtocol.TransportAsync(InternetProtocol.TransportWay.SendAsync, nwStream, strm, buffersize, fi.Length);
                         }
 
                         WriteLine("Done");

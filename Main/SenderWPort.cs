@@ -37,6 +37,13 @@ namespace BFs
                     WriteLine("File: ");
 
                     var FileInput = ReadLine();
+
+                    if (FileInput.StartsWith("\""))
+                        FileInput = FileInput[1..];
+
+                    if (FileInput.EndsWith("\""))
+                        FileInput = FileInput[0..^1];
+
                     FileInfo File = new FileInfo(FileInput);
 
                     InternetProtocol.SendFileSize(nwStream, File.Length);
@@ -47,7 +54,7 @@ namespace BFs
 
                     using (FileStream strm = File.OpenRead())
                     {
-                        InternetProtocol.Transport(InternetProtocol.TransportWay.Send, InternetProtocol.IPVersion.IPV4, nwStream, strm, buffersize, File.Length);
+                        InternetProtocol.Transport(InternetProtocol.TransportWay.Send, nwStream, strm, buffersize, File.Length);
                     }
 
                     nwStream.Close();

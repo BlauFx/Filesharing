@@ -25,8 +25,7 @@ namespace BFs
 
                 WriteLine("Trying to connect...");
 
-                TcpClient client = new TcpClient(IP, 1604);
-                client.ReceiveTimeout = int.MaxValue;
+                TcpClient client = new TcpClient(IP, 1604) { ReceiveTimeout = int.MaxValue };
                 NetworkStream nwStream = client.GetStream();
 
                 if (client.Client.Connected)
@@ -41,7 +40,7 @@ namespace BFs
 
                     using (FileStream strm = new FileStream((@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{InternetProtocol.Filename}"), FileMode.OpenOrCreate))
                     {
-                        InternetProtocol.Transport(InternetProtocol.TransportWay.Receive, InternetProtocol.IPVersion.IPV4, nwStream, strm, buffersize, InternetProtocol.Filesize);
+                        InternetProtocol.Transport(InternetProtocol.TransportWay.Receive, nwStream, strm, buffersize, InternetProtocol.Filesize);
                     }
 
                     nwStream.Close();

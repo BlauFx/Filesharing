@@ -43,7 +43,7 @@ namespace BFs
 
             int num1 = responseStr.IndexOf("Address: ", StringComparison.Ordinal) + 9;
 
-            Console.WriteLine("Code has been pasted into your clipboard");
+            WriteLine("Code has been pasted into your clipboard");
 
             return responseStr.Substring(num1, responseStr.Length - (num1 + 16));
         }
@@ -69,7 +69,7 @@ namespace BFs
             Title = $"BFs {percentComplete.ToString()}%";
         }
 
-        public static void Transport(TransportWay transportWay, IPVersion ipver, NetworkStream nwStream, Stream strm, byte[] buffersize, float filesize)
+        public static void Transport(TransportWay transportWay, NetworkStream nwStream, Stream strm, byte[] buffersize, float filesize)
         {
             switch (transportWay)
             {
@@ -104,7 +104,7 @@ namespace BFs
             }
         }
 
-        public static async Task TransportAsync(TransportWay transportWay, IPVersion ipver, NetworkStream nwStream, Stream strm, byte[] buffersize, float filesize)
+        public static async Task TransportAsync(TransportWay transportWay, NetworkStream nwStream, Stream strm, byte[] buffersize, float filesize)
         {
             switch (transportWay)
             {

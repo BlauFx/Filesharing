@@ -27,7 +27,7 @@ namespace BFs
                 TcpListener listener = TcpListener.Create(1604);
                 listener.Start();
                 TcpClient client = await listener.AcceptTcpClientAsync();
-
+                
                 client.ReceiveTimeout = int.MaxValue;
                 NetworkStream nwStream = client.GetStream();
 
@@ -42,7 +42,7 @@ namespace BFs
 
                     using (FileStream strm = new FileStream((@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{InternetProtocol.Filename}"), FileMode.OpenOrCreate))
                     {
-                        await InternetProtocol.TransportAsync(InternetProtocol.TransportWay.ReceiveAsync, InternetProtocol.IPVersion.IPV4, nwStream, strm, buffersize, InternetProtocol.Filesize);
+                        await InternetProtocol.TransportAsync(InternetProtocol.TransportWay.ReceiveAsync, nwStream, strm, buffersize, InternetProtocol.Filesize);
                     }
 
                     WriteLine("Done");
