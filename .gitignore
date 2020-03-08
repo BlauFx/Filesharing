@@ -350,5 +350,5 @@ MigrationBackup/
 *.cache
 
 # JetBrains Rider
-.idea/.idea.BYFs/.idea/*.xml
+.idea/.idea.BFs/.idea/*.xml
 .idea/.idea.BFs/riderModule.iml
