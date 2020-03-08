@@ -63,35 +63,18 @@ namespace BFs
                         WriteLine("Connected!");
 
                         InternetProtocol.SendFileSize(nwStream, fi.Length);
+                        await Task.Delay(1000);
 
-                        await Task.Delay(700);
+                        InternetProtocol.SendFileName(nwStream, fi.Name);
+                        await Task.Delay(1000);
 
-                        WriteLine("Sending the filename...");
-
-                        byte[] name2 = Encoding.ASCII.GetBytes(fi.Name);
-                        await nwStream.WriteAsync(name2, 0, name2.Length);
-                        nwStream.Flush();
-                        await Task.Delay(700);
-
-                        WriteLine("Sending the file...");
-
-                        FileStream strm = fi.OpenRead();
-
-                        while (true)
-                        {
-                            int num = await strm.ReadAsync(buffersize, 0, buffersize.Length);
-
-                            if (!(num > 0))
-                                break;
-
-                            await nwStream.WriteAsync(buffersize, 0, num);
-
-                            InternetProtocol.UpdateProgressbar(num, fi.Length);
+                        using (FileStream strm = fi.OpenRead())
+                        { 
+                            await InternetProtocol.TransportAsync(InternetProtocol.TransportWay.SendAsync, InternetProtocol.IPVersion.IPV4, nwStream, strm, buffersize, fi.Length);
                         }
 
                         WriteLine("Done");
 
-                        strm.Close();
                         nwStream.Close();
                         client.Close();
                     }

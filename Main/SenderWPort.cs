@@ -37,7 +37,6 @@ namespace BFs
                     WriteLine("File: ");
 
                     var FileInput = ReadLine();
-
                     FileInfo File = new FileInfo(FileInput);
 
                     InternetProtocol.SendFileSize(nwStream, File.Length);

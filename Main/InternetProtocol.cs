@@ -73,7 +73,7 @@ namespace BFs
         {
             switch (transportWay)
             {
-                case (TransportWay) 0:
+                case TransportWay.Receive:
                     WriteLine("Receiving the file...");
                     while (true)
                     {
@@ -87,7 +87,7 @@ namespace BFs
                         UpdateProgressbar(num, filesize);
                     }
                     break;
-                case (TransportWay) 2:
+                case TransportWay.Send:
                     WriteLine("Sending the file...");
                     while (true)
                     {
@@ -101,6 +101,43 @@ namespace BFs
                         UpdateProgressbar(num, filesize);
                     }
                     break;
+            }
+        }
+
+        public static async Task TransportAsync(TransportWay transportWay, IPVersion ipver, NetworkStream nwStream, Stream strm, byte[] buffersize, float filesize)
+        {
+            switch (transportWay)
+            {
+                case TransportWay.ReceiveAsync:
+                    WriteLine("Receiving the file...");
+                    while (true)
+                    {
+                        int num = await nwStream.ReadAsync(buffersize, 0, buffersize.Length);
+
+                        if (!(num > 0))
+                            break;
+
+                        await strm.WriteAsync(buffersize, 0, num);
+
+                        UpdateProgressbar(num, filesize);
+                    }
+                    break;
+                case TransportWay.SendAsync:
+                    WriteLine("Sending the file...");
+                    while (true)
+                    {
+                        int num = await strm.ReadAsync(buffersize, 0, buffersize.Length);
+
+                        if (!(num > 0))
+                            break;
+
+                        await nwStream.WriteAsync(buffersize, 0, num);
+
+                        UpdateProgressbar(num, filesize);
+                    }
+                    break;
+                default:
+                    throw new Exception("Only asynchronous is supported", new NotSupportedException());
             }
         }
 
@@ -155,10 +192,10 @@ namespace BFs
 
         public enum TransportWay
         {
-           Receive = 0,
-           ReceiveAsync = 1,
-           Send = 2,
-           SendAsync = 4
+            Receive = 0,
+            ReceiveAsync = 1,
+            Send = 2,
+            SendAsync = 4
         }
 
         [DllImport("user32.dll")]

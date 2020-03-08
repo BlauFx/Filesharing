@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 using static System.Console;
 
@@ -19,7 +18,7 @@ namespace BFs
 
         private async void Download()
         {
-            InternetProtocol.WriteToClipboard(await InternetProtocol.DownloadIP(InternetProtocol.IPVersion.IPV4));
+            InternetProtocol.WriteToClipboard(InternetProtocol.DownloadIP(InternetProtocol.IPVersion.IPV4).Result);
 
             try
             {
@@ -35,40 +34,19 @@ namespace BFs
                 if (client.Connected)
                 {
                     WriteLine("Connected!");
-                    WriteLine("Receiving the filesize...");
-
-                    byte[] ReceiveBuffer1 = new byte[client.ReceiveBufferSize];
-                    int nwRead1 = await nwStream.ReadAsync(ReceiveBuffer1, 0, ReceiveBuffer1.Length);
-                    string tmp1 = Encoding.ASCII.GetString(ReceiveBuffer1, 0, nwRead1);
-                    float filesize = float.Parse(tmp1);
-                    nwStream.Flush();
+                    InternetProtocol.GetFileSize(nwStream, client);
                     await Task.Delay(1000);
 
-                    WriteLine("Receiving the filename...");
-
-                    byte[] ReceiveBuffer2 = new byte[client.ReceiveBufferSize];
-                    int nwRead2 = await nwStream.ReadAsync(ReceiveBuffer2, 0, ReceiveBuffer2.Length);
-                    string filename = Encoding.ASCII.GetString(ReceiveBuffer2, 0, nwRead2);
-                    nwStream.Flush();
+                    InternetProtocol.GetFileName(nwStream, client);
                     await Task.Delay(1000);
 
-                    FileStream strm = new FileStream((@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{filename}"), FileMode.OpenOrCreate);
-
-                    while (true)
+                    using (FileStream strm = new FileStream((@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{InternetProtocol.Filename}"), FileMode.OpenOrCreate))
                     {
-                        int num = await nwStream.ReadAsync(buffersize, 0, buffersize.Length);
-
-                        if (!(num > 0))
-                            break;
-
-                        await strm.WriteAsync(buffersize, 0, num);
-
-                        InternetProtocol.UpdateProgressbar(num, filesize);
+                        await InternetProtocol.TransportAsync(InternetProtocol.TransportWay.ReceiveAsync, InternetProtocol.IPVersion.IPV4, nwStream, strm, buffersize, InternetProtocol.Filesize);
                     }
 
                     WriteLine("Done");
 
-                    strm.Close();
                     nwStream.Close();
                     client.Close();
                     listener.Server.Close();
@@ -77,7 +55,7 @@ namespace BFs
             }
             catch (Exception e)
             {
-                throw new Exception(e.Message);
+                WriteLine(e.Message);
             }
         }
     }
