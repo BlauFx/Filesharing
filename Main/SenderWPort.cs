@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Net.Sockets;
-using System.Text;
+using System.Threading;
 using static System.Console;
 
 namespace BFs
@@ -33,47 +33,24 @@ namespace BFs
 
                 if (client.Client.Connected)
                 {
-                    WriteLine("Connection accepted from " + client.Client.LocalEndPoint);
+                    WriteLine("Connection accepted from " + client.Client.RemoteEndPoint);
                     WriteLine("File: ");
 
                     var FileInput = ReadLine();
 
-                    FileInfo file = new FileInfo(FileInput);
-                    FileStream strm = file.OpenRead();
+                    FileInfo File = new FileInfo(FileInput);
 
-                    WriteLine("Sending the filesize...");
-                    //send filesize
-                    byte[] name1 = Encoding.ASCII.GetBytes(file.Length.ToString());
-                    nwStream.Write(name1, 0, name1.Length);
-                    nwStream.Flush();
+                    InternetProtocol.SendFileSize(nwStream, File.Length);
+                    Thread.Sleep(1000);
 
-                    WriteLine("Sending the filename...");
-                    //send filename
-                    byte[] name2 = Encoding.ASCII.GetBytes(file.Name);
-                    nwStream.Write(name2, 0, name2.Length);
-                    nwStream.Flush();
+                    InternetProtocol.SendFileName(nwStream, File.Name);
+                    Thread.Sleep(1000);
 
-                    WriteLine("Sending the file...");
-
-                    float current = 0;
-
-                    while (true)
+                    using (FileStream strm = File.OpenRead())
                     {
-                        int num = strm.Read(buffersize, 0, buffersize.Length);
-
-                        if (!(num > 0))
-                            break;
-
-                        nwStream.Write(buffersize, 0, num);
-
-                        if (current < file.Length)
-                            current += num;
-
-                        int percentComplete = (int)Math.Round((double)(100 * current) / file.Length);
-                        Title = $"BFs {percentComplete.ToString()}%";
+                        InternetProtocol.Transport(InternetProtocol.TransportWay.Send, InternetProtocol.IPVersion.IPV4, nwStream, strm, buffersize, File.Length);
                     }
 
-                    strm.Close();
                     nwStream.Close();
                     client.Close();
                     listener.Stop();
@@ -83,7 +60,7 @@ namespace BFs
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                WriteLine(e.Message);
             }
         }
     }

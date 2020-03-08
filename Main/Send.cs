@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
@@ -19,7 +18,7 @@ namespace BFs
             WriteLine("Drag the file to send");
             var y = ReadLine();
 
-            SendFile(x,y);
+            SendFile(x, y);
 
             ReadLine();
         }
@@ -62,11 +61,9 @@ namespace BFs
                     if (client.Connected)
                     {
                         WriteLine("Connected!");
-                        WriteLine("Sending the filesize...");
 
-                        byte[] name1 = Encoding.ASCII.GetBytes(fi.Length.ToString());
-                        await nwStream.WriteAsync(name1, 0, name1.Length);
-                        nwStream.Flush();
+                        InternetProtocol.SendFileSize(nwStream, fi.Length);
+
                         await Task.Delay(700);
 
                         WriteLine("Sending the filename...");
@@ -78,30 +75,18 @@ namespace BFs
 
                         WriteLine("Sending the file...");
 
-                        float current = 0f;
-
                         FileStream strm = fi.OpenRead();
 
-                        while (true) //TDOO: Idea maybe display if possible display a time how long it takes to download the file => same goes for receiving
+                        while (true)
                         {
-                            int Fileinint = await strm.ReadAsync(buffersize, 0, buffersize.Length);
-                            if (Fileinint > 0)
-                            { 
-                                await nwStream.WriteAsync(buffersize, 0, Fileinint);
+                            int num = await strm.ReadAsync(buffersize, 0, buffersize.Length);
 
-                                if (current < fi.Length)
-                                {
-                                    current += Fileinint;
-
-                                    int percentComplete = (int)Math.Round((double)(100 * current) / fi.Length);
-                                    Title = string.Format("BFs {0}%", percentComplete.ToString());
-                                }
-                            }
-                            else
-                            {
-                                Title = "BFs 100%";
+                            if (!(num > 0))
                                 break;
-                            }
+
+                            await nwStream.WriteAsync(buffersize, 0, num);
+
+                            InternetProtocol.UpdateProgressbar(num, fi.Length);
                         }
 
                         WriteLine("Done");
@@ -114,7 +99,7 @@ namespace BFs
                 catch
                 {
                     WriteLine("Couldn't connect \nretrying...");
-                    SendFile(IP,file);
+                    SendFile(IP, file);
                 }
             }
             else
@@ -125,5 +110,5 @@ namespace BFs
                 SendFile(IP, x3);
             }
         }
-        }
+    }
 }

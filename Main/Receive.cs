@@ -42,7 +42,7 @@ namespace BFs
                     string tmp1 = Encoding.ASCII.GetString(ReceiveBuffer1, 0, nwRead1);
                     float filesize = float.Parse(tmp1);
                     nwStream.Flush();
-                    await Task.Delay(1000); //We need to wait before we continue.
+                    await Task.Delay(1000);
 
                     WriteLine("Receiving the filename...");
 
@@ -50,9 +50,7 @@ namespace BFs
                     int nwRead2 = await nwStream.ReadAsync(ReceiveBuffer2, 0, ReceiveBuffer2.Length);
                     string filename = Encoding.ASCII.GetString(ReceiveBuffer2, 0, nwRead2);
                     nwStream.Flush();
-                    await Task.Delay(1000); //We need to wait before we continue.
-
-                    float current = 0f;
+                    await Task.Delay(1000);
 
                     FileStream strm = new FileStream((@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{filename}"), FileMode.OpenOrCreate);
 
@@ -65,21 +63,10 @@ namespace BFs
 
                         await strm.WriteAsync(buffersize, 0, num);
 
-                        if (current < filesize)
-                        {
-                            current += num;
-
-                            int percentComplete = (int)Math.Round((double)(100 * current) / filesize);
-                            Title = string.Format("BFs {0}%", percentComplete.ToString());
-                        }
-                        else
-                        {
-                            Title = "BFs 100%";
-                        }
-
+                        InternetProtocol.UpdateProgressbar(num, filesize);
                     }
 
-                    WriteLine("Done2");
+                    WriteLine("Done");
 
                     strm.Close();
                     nwStream.Close();

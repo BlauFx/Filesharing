@@ -1,13 +1,23 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
+using static System.Console;
 
 namespace BFs
 {
     public static class InternetProtocol
     {
+        private static float current = 0;
+
+        public static float Filesize { get; set; } = 0;
+
+        public static string Filename { get; set; } = string.Empty;
+
         // ReSharper disable once InconsistentNaming
         public static async Task<string> DownloadIP(IPVersion IPversion)
         {
@@ -50,11 +60,105 @@ namespace BFs
             }
         }
 
+        public static void UpdateProgressbar(int num, float filesize)
+        {
+            if (current < filesize)
+                current += num;
+
+            int percentComplete = (int)Math.Round((double)(100 * current) / filesize);
+            Title = $"BFs {percentComplete.ToString()}%";
+        }
+
+        public static void Transport(TransportWay transportWay, IPVersion ipver, NetworkStream nwStream, Stream strm, byte[] buffersize, float filesize)
+        {
+            switch (transportWay)
+            {
+                case (TransportWay) 0:
+                    WriteLine("Receiving the file...");
+                    while (true)
+                    {
+                        int num = nwStream.Read(buffersize, 0, buffersize.Length);
+
+                        if (!(num > 0))
+                            break;
+
+                        strm.Write(buffersize, 0, num);
+
+                        UpdateProgressbar(num, filesize);
+                    }
+                    break;
+                case (TransportWay) 2:
+                    WriteLine("Sending the file...");
+                    while (true)
+                    {
+                        int num = strm.Read(buffersize, 0, buffersize.Length);
+
+                        if (!(num > 0))
+                            break;
+
+                        nwStream.Write(buffersize, 0, num);
+
+                        UpdateProgressbar(num, filesize);
+                    }
+                    break;
+            }
+        }
+
+        public static float GetFileSize(NetworkStream nwStream, TcpClient client)
+        {
+            byte[] ReceiveBuffer = new byte[client.ReceiveBufferSize];
+            int nwRead = nwStream.Read(ReceiveBuffer, 0, ReceiveBuffer.Length);
+            WriteLine("Receiving the filesize...");
+
+            string tmp = Encoding.ASCII.GetString(ReceiveBuffer, 0, nwRead);
+            nwStream.Flush();
+
+            Filesize = float.Parse(tmp);
+            return Filesize;
+        }
+
+        public static string GetFileName(NetworkStream nwStream, TcpClient client)
+        {
+            byte[] ReceiveBuffer = new byte[client.ReceiveBufferSize];
+            int nwRead = nwStream.Read(ReceiveBuffer, 0, ReceiveBuffer.Length);
+            WriteLine("Receiving the filename...");
+
+            Filename = Encoding.ASCII.GetString(ReceiveBuffer, 0, nwRead);
+            nwStream.Flush();
+
+            return "";
+        }
+
+        public static void SendFileSize(NetworkStream nwStream, long FileLength)
+        {
+            WriteLine("Sending the filesize...");
+            byte[] name = Encoding.ASCII.GetBytes(FileLength.ToString());
+            nwStream.Write(name, 0, name.Length);
+            nwStream.Flush();
+        }
+
+        public static void SendFileName(NetworkStream nwStream, string FileName)
+        {
+            WriteLine("Sending the filename...");
+            //send filename
+            byte[] name = Encoding.ASCII.GetBytes(FileName);
+            nwStream.Write(name, 0, name.Length);
+            nwStream.Flush();
+        }
+
         // ReSharper disable once InconsistentNaming
         public enum IPVersion
         {
             IPV4,
             IPV6
+        }
+
+        public enum TransportWay
+        {
+           Receive = 0,
+           ReceiveAsync = 1,
+           Send = 2,
+           SendAsync = 4
         }
 
         [DllImport("user32.dll")]
