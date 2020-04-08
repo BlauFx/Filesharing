@@ -8,8 +8,6 @@ namespace BFs
 {
     public class Receive
     {
-        private readonly byte[] buffersize = new byte[8192];
-
         public Receive()
         {
             Download();
@@ -42,7 +40,7 @@ namespace BFs
 
                     using (FileStream strm = new FileStream((@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{InternetProtocol.Filename}"), FileMode.OpenOrCreate))
                     {
-                        await InternetProtocol.TransportAsync(InternetProtocol.TransportWay.ReceiveAsync, nwStream, strm, buffersize, InternetProtocol.Filesize);
+                        await InternetProtocol.TransportAsync(InternetProtocol.TransportWay.Receive, nwStream, strm, InternetProtocol.Filesize);
                     }
 
                     WriteLine("Done");

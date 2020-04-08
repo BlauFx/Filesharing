@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -8,8 +7,6 @@ namespace BFs
 {
     public class Send
     {
-        private readonly byte[] buffersize = new byte[8192];
-
         public Send()
         {
             WriteLine("Enter the IP");
@@ -39,7 +36,7 @@ namespace BFs
                 {
                     WriteLine("Trying to connect...");
 
-                    TcpClient client = new TcpClient(IP, 1604) { ReceiveTimeout = int.MaxValue };
+                    TcpClient client = new TcpClient(IP, 1604) { ReceiveTimeout = int.MaxValue, ReceiveBufferSize = int.MaxValue };
                     NetworkStream nwStream = client.GetStream();
 
                     if (client.Connected)
@@ -54,7 +51,7 @@ namespace BFs
 
                         using (FileStream strm = fi.OpenRead())
                         {
-                            await InternetProtocol.TransportAsync(InternetProtocol.TransportWay.SendAsync, nwStream, strm, buffersize, fi.Length);
+                            await InternetProtocol.TransportAsync(InternetProtocol.TransportWay.Send, nwStream, strm, fi.Length);
                         }
 
                         WriteLine("Done");

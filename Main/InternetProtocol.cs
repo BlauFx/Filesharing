@@ -12,13 +12,14 @@ namespace BFs
 {
     public static class InternetProtocol
     {
-        private static float current = 0;
+        public static byte[] buffersize = new byte[8192];
+
+        private static float current { get; set; } = 0;
 
         public static float Filesize { get; set; } = 0;
 
         public static string Filename { get; set; } = string.Empty;
 
-        // ReSharper disable once InconsistentNaming
         public static async Task<string> DownloadIP(IPVersion IPversion)
         {
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13;
@@ -43,7 +44,7 @@ namespace BFs
 
             int num1 = responseStr.IndexOf("Address: ", StringComparison.Ordinal) + 9;
 
-            WriteLine("Code has been pasted into your clipboard");
+            WriteLine("IP has been pasted into your clipboard");
 
             return responseStr.Substring(num1, responseStr.Length - (num1 + 16));
         }
@@ -69,75 +70,65 @@ namespace BFs
             Title = $"BFs {percentComplete.ToString()}%";
         }
 
-        public static void Transport(TransportWay transportWay, NetworkStream nwStream, Stream strm, byte[] buffersize, float filesize)
+        public static void Transport(TransportWay transportWay, NetworkStream nwStream, Stream strm, float filesize)
         {
+            void DoWork(Stream a, Stream b)
+            {
+                while (true)
+                {
+                    int num = a.Read(buffersize, 0, buffersize.Length);
+
+                    if (num <= 0)
+                        break;
+
+                    b.Write(buffersize, 0, num);
+                    UpdateProgressbar(num, filesize);
+                }
+            }
+
             switch (transportWay)
             {
                 case TransportWay.Receive:
                     WriteLine("Receiving the file...");
-                    while (true)
-                    {
-                        int num = nwStream.Read(buffersize, 0, buffersize.Length);
 
-                        if (!(num > 0))
-                            break;
-
-                        strm.Write(buffersize, 0, num);
-
-                        UpdateProgressbar(num, filesize);
-                    }
+                    DoWork(nwStream, strm);
                     break;
                 case TransportWay.Send:
                     WriteLine("Sending the file...");
-                    while (true)
-                    {
-                        int num = strm.Read(buffersize, 0, buffersize.Length);
 
-                        if (!(num > 0))
-                            break;
-
-                        nwStream.Write(buffersize, 0, num);
-
-                        UpdateProgressbar(num, filesize);
-                    }
+                    DoWork(strm, nwStream);
                     break;
             }
         }
 
-        public static async Task TransportAsync(TransportWay transportWay, NetworkStream nwStream, Stream strm, byte[] buffersize, float filesize)
+        public static async Task TransportAsync(TransportWay transportWay, NetworkStream nwStream, Stream strm, float filesize)
         {
+            async Task DoWork(Stream a, Stream b)
+            {
+                while (true)
+                {
+                    int num = await a.ReadAsync(buffersize, 0, buffersize.Length);
+
+                    if (num <= 0)
+                        break;
+
+                    await b.WriteAsync(buffersize, 0, num);
+                    UpdateProgressbar(num, filesize);
+                }
+            }
+
             switch (transportWay)
             {
-                case TransportWay.ReceiveAsync:
+                case TransportWay.Receive:
                     WriteLine("Receiving the file...");
-                    while (true)
-                    {
-                        int num = await nwStream.ReadAsync(buffersize, 0, buffersize.Length);
 
-                        if (!(num > 0))
-                            break;
-
-                        await strm.WriteAsync(buffersize, 0, num);
-
-                        UpdateProgressbar(num, filesize);
-                    }
+                    await DoWork(nwStream, strm);
                     break;
-                case TransportWay.SendAsync:
+                case TransportWay.Send:
                     WriteLine("Sending the file...");
-                    while (true)
-                    {
-                        int num = await strm.ReadAsync(buffersize, 0, buffersize.Length);
 
-                        if (!(num > 0))
-                            break;
-
-                        await nwStream.WriteAsync(buffersize, 0, num);
-
-                        UpdateProgressbar(num, filesize);
-                    }
+                    await DoWork(strm, nwStream);
                     break;
-                default:
-                    throw new Exception("Only asynchronous is supported", new NotSupportedException());
             }
         }
 
@@ -183,7 +174,6 @@ namespace BFs
             nwStream.Flush();
         }
 
-        // ReSharper disable once InconsistentNaming
         public enum IPVersion
         {
             IPV4,
@@ -193,9 +183,7 @@ namespace BFs
         public enum TransportWay
         {
             Receive = 0,
-            ReceiveAsync = 1,
-            Send = 2,
-            SendAsync = 4
+            Send = 1,
         }
 
         [DllImport("user32.dll")]

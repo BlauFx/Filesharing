@@ -1,37 +1,38 @@
 ﻿using System;
 using System.IO;
 using System.Net.Sockets;
-using System.Threading;
+using System.Threading.Tasks;
 using static System.Console;
 
 namespace BFs
 {
     public class SenderWPort
     {
-        private readonly byte[] buffersize = new byte[8192];
-
         public SenderWPort()
         {
             Sender();
             ReadLine();
         }
 
-        public void Sender()
+        public async void Sender()
         {
             InternetProtocol.WriteToClipboard(InternetProtocol.DownloadIP(InternetProtocol.IPVersion.IPV4).Result);
 
             try
             {
-                TcpListener listener = TcpListener.Create(1604);
-                listener.Start();
-
                 WriteLine("Waiting for a connection... ");
 
+                TcpListener listener = TcpListener.Create(1604);
+                listener.Start();
                 TcpClient client = listener.AcceptTcpClient();
+
                 client.ReceiveTimeout = int.MaxValue;
+                client.SendTimeout = int.MaxValue;
+                client.SendBufferSize = ushort.MaxValue * 3;
+
                 NetworkStream nwStream = client.GetStream();
 
-                if (client.Client.Connected)
+                if (client.Connected)
                 {
                     WriteLine("Connection accepted from " + client.Client.RemoteEndPoint);
                     WriteLine("File: ");
@@ -47,14 +48,14 @@ namespace BFs
                     FileInfo File = new FileInfo(FileInput);
 
                     InternetProtocol.SendFileSize(nwStream, File.Length);
-                    Thread.Sleep(1000);
+                    await Task.Delay(1000);
 
                     InternetProtocol.SendFileName(nwStream, File.Name);
-                    Thread.Sleep(1000);
+                    await Task.Delay(1000);
 
                     using (FileStream strm = File.OpenRead())
                     {
-                        InternetProtocol.Transport(InternetProtocol.TransportWay.Send, nwStream, strm, buffersize, File.Length);
+                        InternetProtocol.Transport(InternetProtocol.TransportWay.Send, nwStream, strm, File.Length);
                     }
 
                     nwStream.Close();
