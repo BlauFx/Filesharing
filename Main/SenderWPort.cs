@@ -14,7 +14,7 @@ namespace BFs
             ReadLine();
         }
 
-        public async void Sender()
+        private async void Sender()
         {
             InternetProtocol.WriteToClipboard(InternetProtocol.DownloadIP(InternetProtocol.IPVersion.IPV4).Result);
 
@@ -34,7 +34,8 @@ namespace BFs
 
                 if (client.Connected)
                 {
-                    WriteLine("Connection accepted from " + client.Client.RemoteEndPoint);
+                    WriteLine("Connected!");
+                    //WriteLine("Connection accepted from " + client.Client.RemoteEndPoint);
                     WriteLine("File: ");
 
                     var FileInput = ReadLine();

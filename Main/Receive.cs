@@ -20,12 +20,12 @@ namespace BFs
 
             try
             {
-                WriteLine("Waiting for connection...");
+                WriteLine("Waiting for a connection...");
 
                 TcpListener listener = TcpListener.Create(1604);
                 listener.Start();
                 TcpClient client = await listener.AcceptTcpClientAsync();
-                
+
                 client.ReceiveTimeout = int.MaxValue;
                 NetworkStream nwStream = client.GetStream();
 
@@ -38,16 +38,15 @@ namespace BFs
                     InternetProtocol.GetFileName(nwStream, client);
                     await Task.Delay(1000);
 
-                    using (FileStream strm = new FileStream((@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{InternetProtocol.Filename}"), FileMode.OpenOrCreate))
+                    using (FileStream strm = new FileStream(@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{InternetProtocol.Filename}", FileMode.OpenOrCreate))
                     {
                         await InternetProtocol.TransportAsync(InternetProtocol.TransportWay.Receive, nwStream, strm, InternetProtocol.Filesize);
                     }
 
-                    WriteLine("Done");
+                    WriteLine("Done!");
 
                     nwStream.Close();
                     client.Close();
-                    listener.Server.Close();
                     listener.Stop();
                 }
             }

@@ -14,7 +14,7 @@ namespace BFs
     {
         public static byte[] buffersize = new byte[8192];
 
-        private static float current { get; set; } = 0;
+        public static float Current { get; set; } = 0;
 
         public static float Filesize { get; set; } = 0;
 
@@ -63,11 +63,17 @@ namespace BFs
 
         public static void UpdateProgressbar(int num, float filesize)
         {
-            if (current < filesize)
-                current += num;
+            if (Current < filesize)
+                Current += num;
 
-            int percentComplete = (int)Math.Round((double)(100 * current) / filesize);
-            Title = $"BFs {percentComplete.ToString()}%";
+            int percentComplete = (int)Math.Round((double)(100f * Current) / (filesize));
+
+            if (Math.Floor(Math.Log10(Filesize) + 1) > 6)
+            {
+                percentComplete = (int)Math.Round((double)(100f * Current) / (filesize / 10000000));
+            }
+
+            Title = $"BFs {percentComplete}%";
         }
 
         public static void Transport(TransportWay transportWay, NetworkStream nwStream, Stream strm, float filesize)
@@ -157,7 +163,7 @@ namespace BFs
             return "";
         }
 
-        public static void SendFileSize(NetworkStream nwStream, long FileLength)
+        public static void SendFileSize(NetworkStream nwStream, float FileLength)
         {
             WriteLine("Sending the filesize...");
             byte[] name = Encoding.ASCII.GetBytes(FileLength.ToString());

@@ -23,12 +23,13 @@ namespace BFs
 
                 WriteLine("Trying to connect...");
 
-                TcpClient client = new TcpClient(IP, 1604) { ReceiveTimeout = int.MaxValue, ReceiveBufferSize = ushort.MaxValue * 3 };
+                TcpClient client = new TcpClient(IP, 1604) { ReceiveTimeout = int.MaxValue, SendTimeout = int.MaxValue, ReceiveBufferSize = ushort.MaxValue * 3 };
                 NetworkStream nwStream = client.GetStream();
 
                 if (client.Connected)
                 {
-                    WriteLine("Connected to " + client.Client.RemoteEndPoint);
+                    WriteLine("Connected!");
+                    //WriteLine("Connected to " + client.Client.RemoteEndPoint);
 
                     InternetProtocol.GetFileSize(nwStream, client);
                     await Task.Delay(1000);
@@ -36,7 +37,7 @@ namespace BFs
                     InternetProtocol.GetFileName(nwStream, client);
                     await Task.Delay(1000);
 
-                    using (FileStream strm = new FileStream((@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{InternetProtocol.Filename}"), FileMode.OpenOrCreate))
+                    using (FileStream strm = new FileStream(@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{InternetProtocol.Filename}", FileMode.OpenOrCreate))
                     {
                         InternetProtocol.Transport(InternetProtocol.TransportWay.Receive, nwStream, strm, InternetProtocol.Filesize);
                     }

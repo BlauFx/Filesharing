@@ -8,18 +8,19 @@ namespace BFs
         {
             Console.Title = "BFs";
 
-            Console.WriteLine("Welcome to BFs (BlauFx filesharing)");
-            Console.WriteLine("What do you want to do?");
-            Console.WriteLine("1: Send a file | Port Req.");
-            Console.WriteLine("2: Receive a file | No Port req.");
-            Console.WriteLine("------------------");
-            Console.WriteLine("3: Send a file | No Port req.");
-            Console.WriteLine("4: Receive a file | Port req.");
-            Console.WriteLine("------------------");
+            Console.WriteLine("Welcome to BFs (BlauFx filesharing)\n" +
+                "What do you want to do?\n" +
+                "1: Send a file | Port Req.\n" +
+                "2: Receive a file | No Port req.\n" +
+                "------------------\n" +
+                "3: Send a file | No Port req.\n" +
+                "4: Receive a file | Port req.\n" +
+                "------------------\n" +
+                "5: Connect to a server\n" +
+                "6: Create a server\n" +
+                "------------------");
 
-            string x = Console.ReadLine();
-
-            switch (int.Parse(x))
+            switch (int.Parse(Console.ReadLine()))
             {
                 case 1:
                     new SenderWPort();
@@ -32,6 +33,12 @@ namespace BFs
                     break;
                 case 4:
                     new Receive();
+                    break;
+                case 5:
+                    new ShareViaServer(true);
+                    break;
+                case 6:
+                    new ShareViaServer(false);
                     break;
             }
         }
