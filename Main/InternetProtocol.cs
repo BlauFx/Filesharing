@@ -14,9 +14,9 @@ namespace BFs
     {
         public static byte[] buffersize = new byte[8192];
 
-        public static float Current { get; set; } = 0;
+        public static long Current { get; set; } = 0;
 
-        public static float Filesize { get; set; } = 0;
+        public static long Filesize { get; set; } = 0;
 
         public static string Filename { get; set; } = string.Empty;
 
@@ -66,11 +66,14 @@ namespace BFs
             if (Current < filesize)
                 Current += num;
 
-            int percentComplete = (int)Math.Round((double)(100f * Current) / (filesize));
+            int percentComplete = (int)Math.Round((double)(100f * Current) / filesize);
 
-            if (Math.Floor(Math.Log10(Filesize) + 1) > 6)
+            if (Math.Floor(Math.Log10(Filesize) + 1) > 10)
             {
                 percentComplete = (int)Math.Round((double)(100f * Current) / (filesize / 10000000));
+
+                if (percentComplete >= 999999)
+                    percentComplete = 100;
             }
 
             Title = $"BFs {percentComplete}%";
@@ -138,7 +141,7 @@ namespace BFs
             }
         }
 
-        public static float GetFileSize(NetworkStream nwStream, TcpClient client)
+        public static long GetFileSize(NetworkStream nwStream, TcpClient client)
         {
             byte[] ReceiveBuffer = new byte[client.ReceiveBufferSize];
             int nwRead = nwStream.Read(ReceiveBuffer, 0, ReceiveBuffer.Length);
@@ -147,7 +150,7 @@ namespace BFs
             string tmp = Encoding.ASCII.GetString(ReceiveBuffer, 0, nwRead);
             nwStream.Flush();
 
-            Filesize = float.Parse(tmp);
+            Filesize = long.Parse(tmp);
             return Filesize;
         }
 
@@ -163,7 +166,7 @@ namespace BFs
             return "";
         }
 
-        public static void SendFileSize(NetworkStream nwStream, float FileLength)
+        public static void SendFileSize(NetworkStream nwStream, long FileLength)
         {
             WriteLine("Sending the filesize...");
             byte[] name = Encoding.ASCII.GetBytes(FileLength.ToString());
@@ -174,7 +177,6 @@ namespace BFs
         public static void SendFileName(NetworkStream nwStream, string FileName)
         {
             WriteLine("Sending the filename...");
-            //send filename
             byte[] name = Encoding.ASCII.GetBytes(FileName);
             nwStream.Write(name, 0, name.Length);
             nwStream.Flush();

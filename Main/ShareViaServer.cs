@@ -15,6 +15,7 @@ namespace BFs
 
         private List<TcpClient> clients = new List<TcpClient>();
         private List<NetworkStream> nwStream = new List<NetworkStream>();
+        private bool FinishedDoingTranser = true;
 
         public ShareViaServer(bool Connect)
         {
@@ -67,7 +68,7 @@ namespace BFs
                     {
                         int i = 0;
 
-                        while (true)
+                        while (FinishedDoingTranser)
                         {
                             if (i < participants)
                             {
@@ -85,8 +86,10 @@ namespace BFs
                                 {
                                     clients,
                                     nwStream,
-                                    clients.Count() - 1
+                                    clients.Count() - 1,
                                 });
+
+                                FinishedDoingTranser = false;
                             }
 
                             i++;
@@ -166,7 +169,6 @@ namespace BFs
                             if (i == clientPos)
                                 continue;
 
-
                             //if (SendMissingParts)
                             //{
                             //    SendMissingParts = false;
@@ -207,6 +209,7 @@ namespace BFs
 
             ClearLists();
             WriteLine("Done!");
+            FinishedDoingTranser = true;
         }
 
         private void ClearLists()
