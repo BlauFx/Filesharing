@@ -13,9 +13,9 @@ namespace BFs
     {
         private TcpListener listener;
 
-        private List<TcpClient> clients = new List<TcpClient>();
-        private List<NetworkStream> nwStream = new List<NetworkStream>();
-        private bool FinishedDoingTranser = true;
+        private readonly List<TcpClient> clients = new List<TcpClient>();
+        private readonly List<NetworkStream> nwStream = new List<NetworkStream>();
+        private bool FinishedDoingTranser = false;
 
         public ShareViaServer(bool Connect)
         {
@@ -50,67 +50,67 @@ namespace BFs
 
         private async void Receive()
         {
-            while (true)
+            WriteLine("input: ");
+            string input = ReadLine();
+
+            if (input == "Start")
             {
-                string input = ReadLine();
+                Write("Number of participants (receiver + sender) : ");
+                int participants = int.Parse(ReadLine());
 
-                if (input == "Start")
+                WriteLine("Listening...");
+
+                listener = TcpListener.Create(1604);
+                listener.Start();
+
+                try
                 {
-                    Write("Number of participants (receiver + sender) : ");
-                    int participants = int.Parse(Console.ReadLine());
+                    int i = 0;
 
-                    WriteLine("Listening...");
-
-                    listener = TcpListener.Create(1604);
-                    listener.Start();
-
-                    try
+                    while (true)
                     {
-                        int i = 0;
+                        if (FinishedDoingTranser)
+                            break;
 
-                        while (FinishedDoingTranser)
+                        else if (i < participants)
                         {
-                            if (i < participants)
-                            {
-                                WriteLine("Waiting for a connection...");
+                            WriteLine("Waiting for a connection...");
 
-                                clients.Add(await listener.AcceptTcpClientAsync());
-                                nwStream.Add(clients[clients.Count() - 1].GetStream());
+                            clients.Add(await listener.AcceptTcpClientAsync());
+                            nwStream.Add(clients[clients.Count() - 1].GetStream());
 
-                                int clientPos = clients.Count() - 1;
-                                WriteLine($"{clientPos} | {clients[clientPos].Client.RemoteEndPoint} has connected");
-                            }
-                            else if (i == participants)
+                            int clientPos = clients.Count() - 1;
+                            WriteLine($"{clientPos} | {clients[clientPos].Client.RemoteEndPoint} has connected");
+                        }
+                        else if (i == participants)
+                        {
+                            new Thread(new ParameterizedThreadStart(HandleClient)).Start(new object[3]
                             {
-                                new Thread(new ParameterizedThreadStart(HandleClient)).Start(new object[3]
-                                {
                                     clients,
                                     nwStream,
                                     clients.Count() - 1,
-                                });
-
-                                FinishedDoingTranser = false;
-                            }
-
-                            i++;
+                            });
                         }
-                    }
-                    catch (Exception e)
-                    {
-                        if (e.GetType() == typeof(ObjectDisposedException))
-                            WriteLine("The server has been shutdown");
-                        else
-                            WriteLine(e.Message);
-                        listener.Stop();
+                        else if (i > participants*2)
+                        {
+                            i = participants + 1;
+                            Thread.Sleep(10000);
+                        }
+
+                        i++;
                     }
                 }
-                else if (input == "Stop")
+                catch (Exception e)
                 {
+                    if (e.GetType() == typeof(ObjectDisposedException))
+                        WriteLine("The server has been shutdown");
+                    else
+                        WriteLine(e.Message);
                     listener.Stop();
-                    ClearLists();
                 }
 
-                Thread.Sleep(60000);
+                listener.Stop();
+                ClearLists();
             }
         }
 
@@ -142,11 +142,9 @@ namespace BFs
                 await Task.Delay(1000);
             }
 
-            using MemoryStream ms = new MemoryStream();
+            MemoryStream ms = new MemoryStream();
 
             WriteLine("Receiving and sending the file...");
-
-            bool SendMissingParts = true;
 
             while (true)
             {
@@ -169,24 +167,10 @@ namespace BFs
                             if (i == clientPos)
                                 continue;
 
-                            //if (SendMissingParts)
-                            //{
-                            //    SendMissingParts = false;
-
-                            //    ms.Position = 0;
-
-                            //    while (ms.Position < ms.Length)
-                            //    {
-                            //        int num2 = ms.Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
-                            //        nwStream[i].Write(InternetProtocol.buffersize, 0, num2);
-                            //    }
-                            //    continue;
-                            //}
-
                             ms.Position = msPos1;
 
-                            int num3 = ms.Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
-                            nwStream[i].Write(InternetProtocol.buffersize, 0, num3);
+                            int num2 = ms.Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
+                            nwStream[i].Write(InternetProtocol.buffersize, 0, num2);
                         }
                         catch (Exception e)
                         {
@@ -206,6 +190,8 @@ namespace BFs
 
                 InternetProtocol.UpdateProgressbar(num, InternetProtocol.Filesize);
             }
+
+            ms.Close();
 
             ClearLists();
             WriteLine("Done!");
