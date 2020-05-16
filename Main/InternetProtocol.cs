@@ -20,6 +20,8 @@ namespace BFs
 
         public static string Filename { get; set; } = string.Empty;
 
+        public static int Percentage { get; private set; }
+
         public static async Task<string> DownloadIP(IPVersion IPversion)
         {
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13;
@@ -66,17 +68,17 @@ namespace BFs
             if (Current < filesize)
                 Current += num;
 
-            int percentComplete = (int)Math.Round((double)(100f * Current) / filesize);
+            Percentage = (int)Math.Round((double)(100f * Current) / filesize);
 
             if (Math.Floor(Math.Log10(Filesize) + 1) > 10)
             {
-                percentComplete = (int)Math.Round((double)(100f * Current) / (filesize / 10000000));
+                Percentage = (int)Math.Round((double)(100f * Current) / (filesize / 10000000));
 
-                if (percentComplete >= 999999)
-                    percentComplete = 100;
+                if (Percentage >= 999999)
+                    Percentage = 100;
             }
 
-            Title = $"BFs {percentComplete}%";
+            Title = $"BFs {Percentage}%";
         }
 
         public static void Transport(TransportWay transportWay, NetworkStream nwStream, Stream strm, float filesize)
