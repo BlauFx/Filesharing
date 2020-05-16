@@ -1,13 +1,22 @@
 ﻿using System;
+using System.Linq;
 
 namespace BFs
 {
     public class Program
     {
-        public static void Main()
-        {
-            Console.Title = "BFs";
+        public static string Version = "1.0.0";
 
+        public static void Main(string[] args)
+        {
+            if (args.Length > 0)
+                if (!(args[0] == "--noupdate"))
+                    new Updater();
+                else { }
+            else
+                new Updater();
+
+            Console.Title = "BFs";
             Console.WriteLine("Welcome to BFs (BlauFx filesharing)\n" +
                 "What do you want to do?\n" +
                 "1: Send a file | Port Req.\n" +
@@ -20,7 +29,11 @@ namespace BFs
                 "6: Create a server\n" +
                 "------------------");
 
-            switch (int.Parse(Console.ReadLine()))
+            var input = Console.ReadLine();
+
+            foreach (var _ in input.Where(c => c < '0' || c > '9').Select(c => new { })) return;
+
+            switch (int.Parse(input))
             {
                 case 1:
                     new SenderWPort();

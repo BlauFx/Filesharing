@@ -9,4 +9,8 @@
         <StartupObject>BFs.Program</StartupObject>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    </ItemGroup>
+
 </Project>
