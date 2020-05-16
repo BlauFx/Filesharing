@@ -91,7 +91,7 @@ namespace BFs
                                     clients.Count() - 1,
                             });
                         }
-                        else if (i > participants*2)
+                        else if (i > participants)
                         {
                             i = participants + 1;
                             Thread.Sleep(10000);
@@ -145,12 +145,13 @@ namespace BFs
             MemoryStream ms = new MemoryStream();
 
             WriteLine("Receiving and sending the file...");
+            bool SendMissingParts = true;
 
             while (true)
             {
                 int num = nwStream[clientPos].Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
 
-                if (num <= 0 && ms.Length == InternetProtocol.Filesize)
+                if (num <= 0 && InternetProtocol.Current == InternetProtocol.Filesize)
                     break;
 
                 long msPos1 = ms.Position;
@@ -158,7 +159,7 @@ namespace BFs
                 if (num > 0)
                     ms.Write(InternetProtocol.buffersize, 0, num);
 
-                if (true)
+                if (InternetProtocol.Percentage >= 10)
                 {
                     for (int i = 0; i < clients.Count(); i++)
                     {
@@ -167,10 +168,28 @@ namespace BFs
                             if (i == clientPos)
                                 continue;
 
+                            if (SendMissingParts)
+                            {
+                                SendMissingParts = false;
+
+                                ms.Position = 0;
+
+                                while (ms.Position < InternetProtocol.Current)
+                                {
+                                    int internalnum = ms.Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
+                                    nwStream[i].Write(InternetProtocol.buffersize, 0, internalnum);
+                                }
+                                continue;
+                            }
+
                             ms.Position = msPos1;
 
                             int num2 = ms.Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
                             nwStream[i].Write(InternetProtocol.buffersize, 0, num2);
+
+                            byte[] data = ms.ToArray().Skip((int)ms.Position).ToArray();
+                            ms = new MemoryStream();
+                            ms.Write(data, 0, data.Length);
                         }
                         catch (Exception e)
                         {
