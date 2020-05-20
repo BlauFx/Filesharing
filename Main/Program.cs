@@ -9,6 +9,8 @@ namespace BFs
 
         public static void Main(string[] args)
         {
+            new License();
+
             if (args.Length > 0)
                 if (!(args[0] == "--noupdate"))
                     new Updater();
