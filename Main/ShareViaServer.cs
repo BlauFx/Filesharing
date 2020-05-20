@@ -212,7 +212,7 @@ namespace BFs
 
                 InternetProtocol.UpdateProgressbar(num, InternetProtocol.Filesize);
 
-                WriteLine(Title);
+                WriteLine($"BFs {InternetProtocol.Percentage}%");
             }
 
             ms.Close();
