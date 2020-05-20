@@ -158,13 +158,13 @@ namespace BFs
                 long msPos = ms.Position;
 
                 if (num > 0)
-                    ms.Write(InternetProtocol.buffersize, 0, num);
+                    await ms.WriteAsync(InternetProtocol.buffersize, 0, num);
 
                 if (InternetProtocol.Percentage >= 10)
                 {
-                    void Send()
+                    async void Send()
                     {
-                        int num2 = ms.Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
+                        int num2 = await ms.ReadAsync(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
 
                         for (int i = 0; i < clients.Count(); i++)
                         {
