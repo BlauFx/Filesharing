@@ -16,13 +16,13 @@ namespace BFs
 {
     class Updater
     {
-        private const string APIURL = "https://api.github.com/repos/BlauFx/BFs/releases";
-        private const string REPOURL = "https://github.com/BlauFx/BFs/releases";
+        public const string ThisRepo = "BFs";
+        private const string UpdaterRepo = "Updater";
 
         private readonly string ExePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-        private List<Github_Releases> Github_Releases = new List<Github_Releases>();
 
-        public bool IsUpdating = false;
+        private List<Github_Releases> Github_Releases = new List<Github_Releases>();
+        private List<Github_Releases> Github_ReleasesUpdater = new List<Github_Releases>();
 
         public Updater()
         {
@@ -35,26 +35,16 @@ namespace BFs
                     Console.Write("\nDo you want to download and apply the update? [y/n]: ");
                     if (Console.ReadLine() == "y")
                     {
-                        IsUpdating = true;
+                        DownloadUpdate("Updater.exe", true);
+                        DownloadUpdate("win-x64.zip", false);
 
-                        if (!File.Exists("Updater.exe"))
-                        {
-                            Console.WriteLine("Couldn't find Updater.exe\nPlease download the update manually\nPress enter to open the downlaod page");
-
-                            if (Console.ReadKey().Key == ConsoleKey.Enter)
-                                Process.Start(new ProcessStartInfo("cmd", $"/c start {REPOURL}"));
-
-                            return;
-                        }
-
-                        DownloadUpdate();
                         ApplyUpdate();
                     }
                 }
                 else
                 {
                     Console.WriteLine("Please download the update manually");
-                    Console.WriteLine("The updater is not supported on your platform!");
+                    Console.WriteLine("The Auto update feature is not supported on your platform!");
                 }
             }
         }
@@ -65,32 +55,38 @@ namespace BFs
             {
                 using HttpClient httpClient = new HttpClient();
                 HttpResponseMessage response;
+                HttpResponseMessage response2;
 
                 httpClient.DefaultRequestHeaders.Add("user-agent", ".");
 
-                response = httpClient.GetAsync(APIURL).Result;
-                response.EnsureSuccessStatusCode();
+                response = httpClient.GetAsync($"https://api.github.com/repos/BlauFx/{ThisRepo}/releases").Result;
+                response2 = httpClient.GetAsync($"https://api.github.com/repos/BlauFx/{UpdaterRepo}/releases").Result;
 
-                string responseStr = response.Content.ReadAsStringAsync().Result;
-                Github_Releases = JsonConvert.DeserializeObject<List<Github_Releases>>(responseStr);
+                response.EnsureSuccessStatusCode();
+                response2.EnsureSuccessStatusCode();
+
+                Github_Releases = JsonConvert.DeserializeObject<List<Github_Releases>>(response?.Content.ReadAsStringAsync().Result);
+                Github_ReleasesUpdater = JsonConvert.DeserializeObject<List<Github_Releases>>(response2?.Content.ReadAsStringAsync().Result);
             }
             catch { /*It can fail due to no internet connection or being rate-limited*/ }
 
-            return CheckNewVersionAvailable();
+            return CheckIfNewVersionIsAvailable();
         }
 
-        private bool CheckNewVersionAvailable()
-        {
-            var assets = Github_Releases?.FirstOrDefault(x => x.Assets == x.Assets);
-            return !GetCurrentVersion().Equals(assets?.Tag_name ?? GetCurrentVersion());
-        }
+        private bool CheckIfNewVersionIsAvailable() => !GetCurrentVersion().Equals(Github_Releases?.FirstOrDefault()?.Tag_name.Trim('v', 'V') ?? GetCurrentVersion());
 
-        private string GetCurrentVersion() => Program.Version;
+        private string GetCurrentVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
-        public void DownloadUpdate()
+        public void DownloadUpdate(string str, bool Update)
         {
-            var x = Github_Releases.First(x => x.Assets == x.Assets);
-            AssetsClass win_x64 = x.Assets.FirstOrDefault(y => y.Name.Equals("win-x64.zip"));
+            var x = (Update == true ? Github_ReleasesUpdater : Github_Releases)?.FirstOrDefault();
+            AssetsClass assets = x?.Assets?.FirstOrDefault(y => y.Name.Equals(str));
+
+            if (Update)
+            {
+                if (File.Exists("Updater.exe"))
+                    File.Delete("Updater.exe");
+            }
 
             if (!Exists(@$"{ExePath}/temp"))
                 CreateDirectory(@$"{ExePath}/temp");
@@ -100,15 +96,17 @@ namespace BFs
                 using HttpClient httpClient = new HttpClient();
                 httpClient.DefaultRequestHeaders.Add("user-agent", ".");
 
-                using var fs = new FileStream(@$"{ExePath}/temp/win-x64.zip", FileMode.CreateNew);
-                httpClient.GetStreamAsync(win_x64.Browser_download_url).Result.CopyTo(fs);
+                using var fs = new FileStream($"{ExePath}//{(str.Contains("Updater", StringComparison.OrdinalIgnoreCase) == true ? "Updater.exe" : "temp//win-x64.zip")}", FileMode.CreateNew);
+                httpClient.GetStreamAsync(assets?.Browser_download_url).Result.CopyTo(fs);
             }
             catch (Exception e)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"Failed to download win-x64 ({x.Tag_name})\nError msg: {e.Message}");
+                Console.WriteLine($"Failed to download {(Update == true ? "update.exe" : "win-x64-zip")} ({x?.Tag_name})\nError msg: {e.Message}");
 
                 Console.ReadLine();
+
+                Console.ResetColor();
                 Environment.Exit(0);
             }
 
