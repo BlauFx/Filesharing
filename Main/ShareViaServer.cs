@@ -211,6 +211,8 @@ namespace BFs
                 }
 
                 InternetProtocol.UpdateProgressbar(num, InternetProtocol.Filesize);
+
+                WriteLine(Title);
             }
 
             ms.Close();
