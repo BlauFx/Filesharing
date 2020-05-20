@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using static System.Console;
@@ -214,8 +215,9 @@ namespace BFs
 
                 InternetProtocol.UpdateProgressbar(num, InternetProtocol.Filesize);
 
-                if (oldpercentage != InternetProtocol.Percentage)
-                    WriteLine($"BFs {InternetProtocol.Percentage}%");
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    if (oldpercentage != InternetProtocol.Percentage)
+                        WriteLine($"BFs {InternetProtocol.Percentage}%");
             }
 
             ms.Close();
