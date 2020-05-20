@@ -181,6 +181,8 @@ namespace BFs
                                     nwStream[i].Write(InternetProtocol.buffersize, 0, internalnum);
                                 }
                             }
+
+                            InternetProtocol.UpdateProgressbar(num, InternetProtocol.Filesize);
                             continue;
                         }
 
