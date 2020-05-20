@@ -210,9 +210,12 @@ namespace BFs
                     }
                 }
 
+                var oldpercentage = InternetProtocol.Percentage;
+
                 InternetProtocol.UpdateProgressbar(num, InternetProtocol.Filesize);
 
-                WriteLine($"BFs {InternetProtocol.Percentage}%");
+                if (oldpercentage != InternetProtocol.Percentage)
+                    WriteLine($"BFs {InternetProtocol.Percentage}%");
             }
 
             ms.Close();
