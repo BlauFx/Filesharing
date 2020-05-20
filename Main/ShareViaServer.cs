@@ -172,8 +172,6 @@ namespace BFs
 
                             nwStream[i].Write(InternetProtocol.buffersize, 0, num2);
                         }
-
-                        InternetProtocol.UpdateProgressbar(num, InternetProtocol.Filesize);
                     }
 
                     try
@@ -186,6 +184,7 @@ namespace BFs
                             while (ms.Position < InternetProtocol.Current)
                                 Send();
 
+                            InternetProtocol.UpdateProgressbar(num, InternetProtocol.Filesize);
                             continue;
                         }
 
@@ -210,6 +209,8 @@ namespace BFs
                         }
                     }
                 }
+
+                InternetProtocol.UpdateProgressbar(num, InternetProtocol.Filesize);
             }
 
             ms.Close();

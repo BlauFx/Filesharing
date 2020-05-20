@@ -20,7 +20,7 @@ namespace BFs
 
         public static string Filename { get; set; } = string.Empty;
 
-        public static int Percentage { get; private set; }
+        public static int Percentage { get; private set; } = 0;
 
         public static async Task<string> DownloadIP(IPVersion IPversion)
         {
