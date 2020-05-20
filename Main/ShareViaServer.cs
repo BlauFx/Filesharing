@@ -154,40 +154,15 @@ namespace BFs
                 if (num <= 0 && InternetProtocol.Current == InternetProtocol.Filesize)
                     break;
 
-                long msPos1 = ms.Position;
+                long msPos = ms.Position;
 
                 if (num > 0)
                     ms.Write(InternetProtocol.buffersize, 0, num);
 
                 if (InternetProtocol.Percentage >= 10)
                 {
-                    try
+                    void Send()
                     {
-                        if (SendMissingParts)
-                        {
-                            SendMissingParts = false;
-
-                            ms.Position = 0;
-
-                            while (ms.Position < InternetProtocol.Current)
-                            {
-                                int internalnum = ms.Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
-
-                                for (int i = 0; i < clients.Count(); i++)
-                                {
-                                    if (i == clientPos)
-                                        continue;
-
-                                    nwStream[i].Write(InternetProtocol.buffersize, 0, internalnum);
-                                }
-                            }
-
-                            InternetProtocol.UpdateProgressbar(num, InternetProtocol.Filesize);
-                            continue;
-                        }
-
-                        ms.Position = msPos1;
-
                         int num2 = ms.Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
 
                         for (int i = 0; i < clients.Count(); i++)
@@ -197,6 +172,25 @@ namespace BFs
 
                             nwStream[i].Write(InternetProtocol.buffersize, 0, num2);
                         }
+
+                        InternetProtocol.UpdateProgressbar(num, InternetProtocol.Filesize);
+                    }
+
+                    try
+                    {
+                        if (SendMissingParts)
+                        {
+                            SendMissingParts = false;
+                            ms.Position = 0;
+
+                            while (ms.Position < InternetProtocol.Current)
+                                Send();
+
+                            continue;
+                        }
+
+                        ms.Position = msPos;
+                        Send();
 
                         byte[] data = ms.ToArray().Skip((int)ms.Position).ToArray();
                         ms = new MemoryStream();
@@ -216,8 +210,6 @@ namespace BFs
                         }
                     }
                 }
-
-                InternetProtocol.UpdateProgressbar(num, InternetProtocol.Filesize);
             }
 
             ms.Close();
