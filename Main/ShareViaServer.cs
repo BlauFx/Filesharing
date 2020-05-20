@@ -161,48 +161,56 @@ namespace BFs
 
                 if (InternetProtocol.Percentage >= 10)
                 {
-                    for (int i = 0; i < clients.Count(); i++)
+                    try
                     {
-                        try
+                        if (SendMissingParts)
+                        {
+                            SendMissingParts = false;
+
+                            ms.Position = 0;
+
+                            while (ms.Position < InternetProtocol.Current)
+                            {
+                                int internalnum = ms.Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
+
+                                for (int i = 0; i < clients.Count(); i++)
+                                {
+                                    if (i == clientPos)
+                                        continue;
+
+                                    nwStream[i].Write(InternetProtocol.buffersize, 0, internalnum);
+                                }
+                            }
+                            continue;
+                        }
+
+                        ms.Position = msPos1;
+
+                        int num2 = ms.Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
+
+                        for (int i = 0; i < clients.Count(); i++)
                         {
                             if (i == clientPos)
                                 continue;
 
-                            if (SendMissingParts)
-                            {
-                                SendMissingParts = false;
-
-                                ms.Position = 0;
-
-                                while (ms.Position < InternetProtocol.Current)
-                                {
-                                    int internalnum = ms.Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
-                                    nwStream[i].Write(InternetProtocol.buffersize, 0, internalnum);
-                                }
-                                continue;
-                            }
-
-                            ms.Position = msPos1;
-
-                            int num2 = ms.Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
                             nwStream[i].Write(InternetProtocol.buffersize, 0, num2);
-
-                            byte[] data = ms.ToArray().Skip((int)ms.Position).ToArray();
-                            ms = new MemoryStream();
-                            ms.Write(data, 0, data.Length);
                         }
-                        catch (Exception e)
+
+                        byte[] data = ms.ToArray().Skip((int)ms.Position).ToArray();
+                        ms = new MemoryStream();
+                        ms.Write(data, 0, data.Length);
+                    }
+                    catch (Exception e)
+                    {
+                        if (!client.Client.Connected)
                         {
-                            if (!client.Client.Connected)
-                            {
-                                WriteLine($"{client.Client.RemoteEndPoint} has disconnected");
-                                clients.Remove(client);
-                                nwStream.Remove(nwStream[i]);
-                            }
-                            else
-                            {
-                                WriteLine(e.Message);
-                            }
+                            WriteLine($"{client.Client.RemoteEndPoint} has disconnected");
+                            clients.Remove(client);
+                            nwStream.Remove(nwStream[clientPos]);
+                        }
+                        else
+                        {
+                            WriteLine(e.Message);
                         }
                     }
                 }
