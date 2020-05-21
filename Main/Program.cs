@@ -13,9 +13,20 @@ namespace BFs
 
             if (args.Length > 0)
             {
-                if (!args[0].Equals("--noupdate", StringComparison.OrdinalIgnoreCase))
+                bool[] IsAvailable = new bool[2];
+
+                foreach (string arg in args)
+                {
+                    if (arg.Equals("--noupdate", StringComparison.OrdinalIgnoreCase))
+                        IsAvailable[0] = true;
+                    else if (arg.Equals("--async", StringComparison.OrdinalIgnoreCase))
+                        IsAvailable[1] = true;
+                }
+
+                if (IsAvailable[0])
                     new Updater();
-                if (args[1].Equals("--async", StringComparison.OrdinalIgnoreCase))
+
+                if (IsAvailable[1])
                     InternetProtocol.DoAsync = true;
             }
             else
