@@ -83,7 +83,7 @@ namespace BFs
             Title = $"BFs {Percentage}%";
         }
 
-        public static async void Transport(TransportWay transportWay, NetworkStream nwStream, Stream strm, float filesize)
+        public static async Task Transport(TransportWay transportWay, NetworkStream nwStream, Stream strm, float filesize)
         {
             async Task AsyncDoWork(Stream a, Stream b)
             {

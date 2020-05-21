@@ -56,7 +56,7 @@ namespace BFs
 
                     using (FileStream strm = File.OpenRead())
                     {
-                        InternetProtocol.Transport(InternetProtocol.TransportWay.Send, nwStream, strm, File.Length);
+                        await InternetProtocol.Transport(InternetProtocol.TransportWay.Send, nwStream, strm, File.Length);
                     }
 
                     nwStream.Close();

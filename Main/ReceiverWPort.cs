@@ -38,7 +38,7 @@ namespace BFs
 
                     using (FileStream strm = new FileStream(@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{InternetProtocol.Filename}", FileMode.OpenOrCreate))
                     {
-                        InternetProtocol.Transport(InternetProtocol.TransportWay.Receive, nwStream, strm, InternetProtocol.Filesize);
+                        await InternetProtocol.Transport(InternetProtocol.TransportWay.Receive, nwStream, strm, InternetProtocol.Filesize);
                     }
 
                     nwStream.Close();
