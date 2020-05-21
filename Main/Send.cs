@@ -52,7 +52,7 @@ namespace BFs
             {
                 WriteLine("Trying to connect...");
 
-                using TcpClient client = new TcpClient(IP, 1604) { ReceiveTimeout = int.MaxValue, ReceiveBufferSize = int.MaxValue };
+                using TcpClient client = new TcpClient(IP, 1604) { ReceiveTimeout = int.MaxValue, SendTimeout = int.MaxValue, ReceiveBufferSize = int.MaxValue };
                 using NetworkStream nwStream = client.GetStream();
 
                 if (client.Connected)
