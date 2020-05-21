@@ -150,7 +150,12 @@ namespace BFs
 
             while (true)
             {
-                int num = nwStream[clientPos].Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
+                int num;
+
+                if (InternetProtocol.DoAsync)
+                    num = await nwStream[clientPos].ReadAsync(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
+                else
+                    num = nwStream[clientPos].Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
 
                 if (num <= 0 && InternetProtocol.Current == InternetProtocol.Filesize)
                     break;
@@ -171,7 +176,10 @@ namespace BFs
                             if (i == clientPos)
                                 continue;
 
-                            nwStream[i].Write(InternetProtocol.buffersize, 0, num2);
+                            if (InternetProtocol.DoAsync)
+                                await nwStream[i].WriteAsync(InternetProtocol.buffersize, 0, num2);
+                            else
+                                nwStream[i].Write(InternetProtocol.buffersize, 0, num2);
                         }
                     }
 

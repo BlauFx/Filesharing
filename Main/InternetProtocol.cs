@@ -22,6 +22,8 @@ namespace BFs
 
         public static int Percentage { get; private set; } = 0;
 
+        public static bool DoAsync { get; set; } = false;
+
         public static async Task<string> DownloadIP(IPVersion IPversion)
         {
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13;
@@ -81,8 +83,22 @@ namespace BFs
             Title = $"BFs {Percentage}%";
         }
 
-        public static void Transport(TransportWay transportWay, NetworkStream nwStream, Stream strm, float filesize)
+        public static async void Transport(TransportWay transportWay, NetworkStream nwStream, Stream strm, float filesize)
         {
+            async Task AsyncDoWork(Stream a, Stream b)
+            {
+                while (true)
+                {
+                    int num = await a.ReadAsync(buffersize, 0, buffersize.Length);
+
+                    if (num <= 0)
+                        break;
+
+                    await b.WriteAsync(buffersize, 0, num);
+                    UpdateProgressbar(num, filesize);
+                }
+            }
+
             void DoWork(Stream a, Stream b)
             {
                 while (true)
@@ -102,43 +118,18 @@ namespace BFs
                 case TransportWay.Receive:
                     WriteLine("Receiving the file...");
 
-                    DoWork(nwStream, strm);
+                    if (DoAsync)
+                        await AsyncDoWork(nwStream, strm);
+                    else
+                        DoWork(nwStream, strm);
                     break;
                 case TransportWay.Send:
                     WriteLine("Sending the file...");
 
-                    DoWork(strm, nwStream);
-                    break;
-            }
-        }
-
-        public static async Task TransportAsync(TransportWay transportWay, NetworkStream nwStream, Stream strm, float filesize)
-        {
-            async Task DoWork(Stream a, Stream b)
-            {
-                while (true)
-                {
-                    int num = await a.ReadAsync(buffersize, 0, buffersize.Length);
-
-                    if (num <= 0)
-                        break;
-
-                    await b.WriteAsync(buffersize, 0, num);
-                    UpdateProgressbar(num, filesize);
-                }
-            }
-
-            switch (transportWay)
-            {
-                case TransportWay.Receive:
-                    WriteLine("Receiving the file...");
-
-                    await DoWork(nwStream, strm);
-                    break;
-                case TransportWay.Send:
-                    WriteLine("Sending the file...");
-
-                    await DoWork(strm, nwStream);
+                    if (DoAsync)
+                        await AsyncDoWork(strm, nwStream);
+                    else
+                        DoWork(strm, nwStream);
                     break;
             }
         }

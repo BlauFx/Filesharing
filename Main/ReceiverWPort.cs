@@ -29,7 +29,6 @@ namespace BFs
                 if (client.Connected)
                 {
                     WriteLine("Connected!");
-                    //WriteLine("Connected to " + client.Client.RemoteEndPoint);
 
                     InternetProtocol.GetFileSize(nwStream, client);
                     await Task.Delay(1000);

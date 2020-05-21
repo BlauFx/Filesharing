@@ -12,9 +12,12 @@ namespace BFs
             new License();
 
             if (args.Length > 0)
-                if (!(args[0] == "--noupdate"))
+            {
+                if (!args[0].Equals("--noupdate", StringComparison.OrdinalIgnoreCase))
                     new Updater();
-                else { }
+                if (args[1].Equals("--async", StringComparison.OrdinalIgnoreCase))
+                    InternetProtocol.DoAsync = true;
+            }
             else
                 new Updater();
 
