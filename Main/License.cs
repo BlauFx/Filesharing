@@ -10,7 +10,7 @@ namespace BFs
         
         public License()
         {
-            license[0] = "BYTDownloader";
+            license[0] = "BFs";
             license[1] = "Newtonsoft.Json";
             license[2] = "Updater";
 
