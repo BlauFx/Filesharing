@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using static System.Console;
 
@@ -76,7 +75,7 @@ namespace BFs
             Title = $"BFs {Percentage}% | {Transferspeed:0.0} MB/s | Estimated transfer time: {CalcEstimatedTime(filesize - Current, Transferspeed)}";
         }
 
-         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static double CalcTransferSpeed(double Filesize, double time)
             => (Filesize / 1000 / 1000) / time;
 
@@ -98,51 +97,35 @@ namespace BFs
 
         public static async Task Transport(TransportWay transportWay, NetworkStream nwStream, Stream strm, float filesize)
         {
-            DateTime CurrentTime;
-            double Milliseconds = .5d;
-            int BytesSent = 0;
-
-            void DoStuffWithProgressbar()
+            async Task DoWork(Stream a, Stream b)
             {
-                if (DateTime.Now - CurrentTime >= TimeSpan.FromSeconds(Milliseconds))
+                DateTime CurrentTime;
+                CurrentTime = DateTime.Now;
+                int BytesSent = 0;
+                double Milliseconds = .5d;
+
+                while (true)
                 {
+                    int num = DoAsync ? await a.ReadAsync(buffersize, 0, buffersize.Length) : a.Read(buffersize, 0, buffersize.Length);
+                    BytesSent += num;
+
+                    if (num <= 0)
+                    {
+                        UpdateProgressbar(BytesSent, filesize, Milliseconds);
+                        break;
+                    }
+
+                    if (DoAsync)
+                        await b.WriteAsync(buffersize, 0, num);
+                    else
+                        b.Write(buffersize, 0, num);
+
+                    if (DateTime.Now - CurrentTime < TimeSpan.FromSeconds(Milliseconds))
+                        continue;
+
                     CurrentTime = DateTime.Now;
                     UpdateProgressbar(BytesSent, filesize, Milliseconds);
                     BytesSent = 0;
-                }
-            }
-
-            async Task AsyncDoWork(Stream a, Stream b)
-            {
-                CurrentTime = DateTime.Now;
-
-                while (true)
-                {
-                    int num = await a.ReadAsync(buffersize, 0, buffersize.Length);
-                    BytesSent += num;
-
-                    if (num <= 0)
-                        break;
-
-                    await b.WriteAsync(buffersize, 0, num);
-                    DoStuffWithProgressbar();
-                }
-            }
-
-            void DoWork(Stream a, Stream b)
-            {
-                CurrentTime = DateTime.Now;
-
-                while (true)
-                {
-                    int num = a.Read(buffersize, 0, buffersize.Length);
-                    BytesSent += num;
-
-                    if (num <= 0)
-                        break;
-
-                    b.Write(buffersize, 0, num);
-                    DoStuffWithProgressbar();
                 }
             }
 
@@ -150,26 +133,14 @@ namespace BFs
             {
                 case TransportWay.Receive:
                     WriteLine("Receiving the file...");
-
-                    if (DoAsync)
-                        await AsyncDoWork(nwStream, strm);
-                    else
-                        DoWork(nwStream, strm);
+                    await DoWork(nwStream, strm);
                     break;
                 case TransportWay.Send:
                     WriteLine("Sending the file...");
-
-                    if (DoAsync)
-                        await AsyncDoWork(strm, nwStream);
-                    else
-                        DoWork(strm, nwStream);
+                    await DoWork(strm, nwStream);
                     break;
             }
 
-            CurrentTime = DateTime.Now;
-            Thread.Sleep(500);
-
-            DoStuffWithProgressbar();
             Title = $"BFs {Percentage}% | Done!";
         }
 
