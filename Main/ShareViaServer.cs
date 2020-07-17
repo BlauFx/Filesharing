@@ -14,27 +14,26 @@ namespace BFs
     {
         private TcpListener listener;
 
-        private readonly List<TcpClient> clients = new List<TcpClient>();
-        private readonly List<NetworkStream> nwStream = new List<NetworkStream>();
-        private bool FinishedDoingTranser = false;
+        private readonly List<Tuple<TcpClient, NetworkStream>> clients = new List<Tuple<TcpClient, NetworkStream>>();
+        private bool FinishedTransfer = false;
 
-        public ShareViaServer(bool Connect)
+        public ShareViaServer(bool ConnectToServer)
         {
             Clear();
 
-            if (Connect)
+            if (ConnectToServer)
             {
-                Send();
+                Client();
                 ReadLine();
             }
             else
             {
-                Receive();
+                Server();
                 ReadLine();
             }
         }
 
-        private void Send()
+        private void Client()
         {
             Write("Do you want to send or receive a file? [1/2]: ");
             string input = ReadLine();
@@ -49,86 +48,67 @@ namespace BFs
             }
         }
 
-        private async void Receive()
+        private async void Server()
         {
-            WriteLine("input: ");
-            string input = ReadLine();
+            Write("Number of participants (receiver + sender): ");
+            int participants = int.Parse(ReadLine());
 
-            if (input == "Start")
+            WriteLine("Listening...");
+
+            listener = TcpListener.Create(1604);
+            listener.Start();
+
+            try
             {
-                Write("Number of participants (receiver + sender) : ");
-                int participants = int.Parse(ReadLine());
+                int i = 0;
 
-                WriteLine("Listening...");
-
-                listener = TcpListener.Create(1604);
-                listener.Start();
-
-                try
+                while (!FinishedTransfer)
                 {
-                    int i = 0;
-
-                    while (true)
+                    if (i < participants)
                     {
-                        if (FinishedDoingTranser)
-                            break;
+                        WriteLine("Waiting for a connection...");
 
-                        else if (i < participants)
-                        {
-                            WriteLine("Waiting for a connection...");
+                        var client = await listener.AcceptTcpClientAsync();
+                        clients.Add(new Tuple<TcpClient, NetworkStream>(client, client.GetStream()));
 
-                            clients.Add(await listener.AcceptTcpClientAsync());
-                            nwStream.Add(clients[clients.Count() - 1].GetStream());
+                        int clientPos = clients.Count() - 1;
 
-                            int clientPos = clients.Count() - 1;
-                            WriteLine($"{clientPos} | {clients[clientPos].Client.RemoteEndPoint} has connected");
-                        }
-                        else if (i == participants)
-                        {
-                            new Thread(new ParameterizedThreadStart(HandleClient)).Start(new object[3]
-                            {
-                                    clients,
-                                    nwStream,
-                                    clients.Count() - 1,
-                            });
-                        }
-                        else if (i > participants)
-                        {
-                            i = participants + 1;
-                            Thread.Sleep(10000);
-                        }
-
-                        i++;
+                        WriteLine($"{clientPos} | {clients[clientPos].Item1.Client.RemoteEndPoint} has connected");
                     }
-                }
-                catch (Exception e)
-                {
-                    if (e.GetType() == typeof(ObjectDisposedException))
-                        WriteLine("The server has been shutdown");
+                    else if (i == participants)
+                    {
+                        HandleClient(clients);
+                    }
                     else
-                        WriteLine(e.Message);
-                    listener.Stop();
-                }
+                    {
+                        i = participants + 1;
+                        Thread.Sleep(10000);
+                    }
 
-                listener.Stop();
-                ClearLists();
+                    i++;
+                }
             }
+            catch (Exception e)
+            {
+                if (e.GetType() == typeof(ObjectDisposedException))
+                    WriteLine("The server has been shutdown");
+                else
+                    WriteLine(e.Message);
+            }
+
+            clients.Clear();
+            listener?.Stop();
         }
 
-        public async void HandleClient(object args)
+        public async void HandleClient(List<Tuple<TcpClient, NetworkStream>> clients)
         {
-            Array array = (Array)args;
+            int clientPos = clients.Count() - 1;
+            using TcpClient client = clients[clientPos].Item1;
 
-            List<TcpClient> clients = (List<TcpClient>)array.GetValue(0);
-            List<NetworkStream> nwStream = (List<NetworkStream>)array.GetValue(1);
-
-            int clientPos = (int)array.GetValue(2);
-            using TcpClient client = clients[clientPos];
-
-            InternetProtocol.GetFileSize(nwStream[clientPos], client);
+            InternetProtocol.GetFileSize(clients[clientPos].Item2, client);
             await Task.Delay(1000);
 
-            InternetProtocol.GetFileName(nwStream[clientPos], client);
+            InternetProtocol.GetFileName(clients[clientPos].Item2, client);
             await Task.Delay(1000);
 
             for (int i = 0; i < clients.Count(); i++)
@@ -136,26 +116,43 @@ namespace BFs
                 if (i == clientPos)
                     continue;
 
-                InternetProtocol.SendFileSize(nwStream[i], InternetProtocol.Filesize);
+                InternetProtocol.SendFileSize(clients[i].Item2, InternetProtocol.Filesize);
                 await Task.Delay(1000);
 
-                InternetProtocol.SendFileName(nwStream[i], InternetProtocol.Filename);
+                InternetProtocol.SendFileName(clients[i].Item2, InternetProtocol.Filename);
                 await Task.Delay(1000);
             }
 
+            WriteLine("Receiving and sending the file...");
             MemoryStream ms = new MemoryStream();
 
-            WriteLine("Receiving and sending the file...");
             bool SendMissingParts = true;
+            DateTime CurrentTime;
+            double Milliseconds = .5d;
+            int BytesSent = 0;
+
+            void DoStuffWithProgressbar()
+            {
+                if (DateTime.Now - CurrentTime >= TimeSpan.FromSeconds(Milliseconds))
+                {
+                    CurrentTime = DateTime.Now;
+                    InternetProtocol.UpdateProgressbar(BytesSent, InternetProtocol.Filesize, Milliseconds);
+                    BytesSent = 0;
+                }
+            }
+
+            CurrentTime = DateTime.Now;
 
             while (true)
             {
                 int num;
 
                 if (InternetProtocol.DoAsync)
-                    num = await nwStream[clientPos].ReadAsync(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
+                    num = await clients[clientPos].Item2.ReadAsync(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
                 else
-                    num = nwStream[clientPos].Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
+                    num = clients[clientPos].Item2.Read(InternetProtocol.buffersize, 0, InternetProtocol.buffersize.Length);
+
+                BytesSent += num;
 
                 if (num <= 0 && InternetProtocol.Current == InternetProtocol.Filesize)
                     break;
@@ -177,9 +174,9 @@ namespace BFs
                                 continue;
 
                             if (InternetProtocol.DoAsync)
-                                await nwStream[i].WriteAsync(InternetProtocol.buffersize, 0, num2);
+                                await clients[i].Item2.WriteAsync(InternetProtocol.buffersize, 0, num2);
                             else
-                                nwStream[i].Write(InternetProtocol.buffersize, 0, num2);
+                                clients[i].Item2.Write(InternetProtocol.buffersize, 0, num2);
                         }
                     }
 
@@ -193,7 +190,7 @@ namespace BFs
                             while (ms.Position < InternetProtocol.Current)
                                 Send();
 
-                            InternetProtocol.UpdateProgressbar(num, InternetProtocol.Filesize);
+                            DoStuffWithProgressbar();
                             continue;
                         }
 
@@ -209,42 +206,25 @@ namespace BFs
                         if (!client.Client.Connected)
                         {
                             WriteLine($"{client.Client.RemoteEndPoint} has disconnected");
-                            clients.Remove(client);
-                            nwStream.Remove(nwStream[clientPos]);
+                            clients.Remove(new Tuple<TcpClient, NetworkStream>(client, clients[clientPos].Item2));
                         }
                         else
-                        {
                             WriteLine(e.Message);
-                        }
                     }
                 }
 
                 var oldpercentage = InternetProtocol.Percentage;
+                DoStuffWithProgressbar();
 
-                InternetProtocol.UpdateProgressbar(num, InternetProtocol.Filesize);
-
-                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    if (oldpercentage != InternetProtocol.Percentage)
-                        WriteLine($"BFs {InternetProtocol.Percentage}%");
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && oldpercentage != InternetProtocol.Percentage)
+                    WriteLine($"BFs {InternetProtocol.Percentage}%");
             }
 
             ms.Close();
 
-            ClearLists();
-            WriteLine("Done!");
-            FinishedDoingTranser = true;
-        }
-
-        private void ClearLists()
-        {
-            for (int i = 0; i < clients.Count(); i++)
-            {
-                nwStream[i].Close();
-                clients[i].Close();
-            }
-
-            nwStream.Clear();
             clients.Clear();
+            WriteLine("Done!");
+            FinishedTransfer = true;
         }
     }
 }

@@ -27,7 +27,10 @@ namespace BFs
                     new Updater();
 
                 if (IsAvailable[1])
+                {
                     InternetProtocol.DoAsync = true;
+                    Console.WriteLine("Async is enabled!\n");
+                }
             }
             else
                 new Updater();
