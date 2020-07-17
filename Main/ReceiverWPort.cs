@@ -23,8 +23,8 @@ namespace BFs
 
                 WriteLine("Trying to connect...");
 
-                TcpClient client = new TcpClient(IP, 1604) { ReceiveTimeout = int.MaxValue, SendTimeout = int.MaxValue, ReceiveBufferSize = ushort.MaxValue * 3 };
-                NetworkStream nwStream = client.GetStream();
+                using TcpClient client = new TcpClient(IP, 1604) { ReceiveTimeout = int.MaxValue, SendTimeout = int.MaxValue, ReceiveBufferSize = InternetProtocol.buffersize.Length };
+                using NetworkStream nwStream = client.GetStream();
 
                 if (client.Connected)
                 {
@@ -40,9 +40,6 @@ namespace BFs
                     {
                         await InternetProtocol.Transport(InternetProtocol.TransportWay.Receive, nwStream, strm, InternetProtocol.Filesize);
                     }
-
-                    nwStream.Close();
-                    client.Close();
 
                     WriteLine("Done!");
                 }

@@ -24,18 +24,19 @@ namespace BFs
 
                 TcpListener listener = TcpListener.Create(1604);
                 listener.Start();
-                TcpClient client = listener.AcceptTcpClient();
+
+                using TcpClient client = listener.AcceptTcpClient();
+                using NetworkStream nwStream = client.GetStream();
 
                 client.ReceiveTimeout = int.MaxValue;
                 client.SendTimeout = int.MaxValue;
-                client.SendBufferSize = ushort.MaxValue * 3;
-
-                NetworkStream nwStream = client.GetStream();
+                client.SendBufferSize = InternetProtocol.buffersize.Length;
 
                 if (client.Connected)
                 {
                     WriteLine("Connected!");
-                    //WriteLine("Connection accepted from " + client.Client.RemoteEndPoint);
+                    WriteLine("Connection accepted from " + client.Client.RemoteEndPoint);
+
                     WriteLine("File: ");
 
                     var FileInput = ReadLine();
@@ -59,8 +60,6 @@ namespace BFs
                         await InternetProtocol.Transport(InternetProtocol.TransportWay.Send, nwStream, strm, File.Length);
                     }
 
-                    nwStream.Close();
-                    client.Close();
                     listener.Stop();
 
                     WriteLine("Done!");
