@@ -5,8 +5,6 @@ namespace BFs
 {
     public class Program
     {
-        public static string Version = "1.0.0";
-
         public static void Main(string[] args)
         {
             new License();
