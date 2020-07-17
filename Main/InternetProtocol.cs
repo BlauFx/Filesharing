@@ -3,8 +3,10 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using static System.Console;
 
@@ -43,12 +45,10 @@ namespace BFs
             }
 
             response?.EnsureSuccessStatusCode();
-
             string responseStr = response?.Content.ReadAsStringAsync().Result;
 
             int num1 = responseStr.IndexOf("Address: ", StringComparison.Ordinal) + 9;
-
-            WriteLine("IP has been pasted into your clipboard");
+            WriteLine("Your IP has been pasted into your clipboard");
 
             return responseStr.Substring(num1, responseStr.Length - (num1 + 16));
         }
@@ -65,51 +65,84 @@ namespace BFs
             }
         }
 
-        public static void UpdateProgressbar(int num, float filesize)
+        public static void UpdateProgressbar(int num, float filesize, double ElapsedSeconds)
         {
             if (Current < filesize)
                 Current += num;
 
             Percentage = (int)Math.Round((double)(100f * Current) / filesize);
 
-            if (Math.Floor(Math.Log10(Filesize) + 1) > 10)
-            {
-                Percentage = (int)Math.Round((double)(100f * Current) / (filesize / 10000000));
+            double Transferspeed = CalcTransferSpeed(num, ElapsedSeconds);
+            Title = $"BFs {Percentage}% | {Transferspeed:0.0} MB/s | Estimated transfer time: {CalcEstimatedTime(filesize - Current, Transferspeed)}";
+        }
 
-                if (Percentage >= 999999)
-                    Percentage = 100;
-            }
+         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static double CalcTransferSpeed(double Filesize, double time)
+            => (Filesize / 1000 / 1000) / time;
 
-            Title = $"BFs {Percentage}%";
+        private static string CalcEstimatedTime(float filesize, double speed)
+        {
+            float KB = filesize / 1000;
+            float Kbit = KB * 8;
+
+            double SpeedInKbit = speed * 8000;
+            float calcTime = Kbit / (float)SpeedInKbit;
+
+            if (calcTime > 60 * 60)
+                return (calcTime / (60 * 60)).ToString("0.0") + "h";
+            else if (calcTime > 60)
+                return (calcTime / 60).ToString("0.0") + "m";
+
+            return calcTime.ToString("0.0") + "s";
         }
 
         public static async Task Transport(TransportWay transportWay, NetworkStream nwStream, Stream strm, float filesize)
         {
+            DateTime CurrentTime;
+            double Milliseconds = .5d;
+            int BytesSent = 0;
+
+            void DoStuffWithProgressbar()
+            {
+                if (DateTime.Now - CurrentTime >= TimeSpan.FromSeconds(Milliseconds))
+                {
+                    CurrentTime = DateTime.Now;
+                    UpdateProgressbar(BytesSent, filesize, Milliseconds);
+                    BytesSent = 0;
+                }
+            }
+
             async Task AsyncDoWork(Stream a, Stream b)
             {
+                CurrentTime = DateTime.Now;
+
                 while (true)
                 {
                     int num = await a.ReadAsync(buffersize, 0, buffersize.Length);
+                    BytesSent += num;
 
                     if (num <= 0)
                         break;
 
                     await b.WriteAsync(buffersize, 0, num);
-                    UpdateProgressbar(num, filesize);
+                    DoStuffWithProgressbar();
                 }
             }
 
             void DoWork(Stream a, Stream b)
             {
+                CurrentTime = DateTime.Now;
+
                 while (true)
                 {
                     int num = a.Read(buffersize, 0, buffersize.Length);
+                    BytesSent += num;
 
                     if (num <= 0)
                         break;
 
                     b.Write(buffersize, 0, num);
-                    UpdateProgressbar(num, filesize);
+                    DoStuffWithProgressbar();
                 }
             }
 
@@ -132,6 +165,12 @@ namespace BFs
                         DoWork(strm, nwStream);
                     break;
             }
+
+            CurrentTime = DateTime.Now;
+            Thread.Sleep(500);
+
+            DoStuffWithProgressbar();
+            Title = $"BFs {Percentage}% | Done!";
         }
 
         public static long GetFileSize(NetworkStream nwStream, TcpClient client)
