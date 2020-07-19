@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -8,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using static System.IO.Directory;
@@ -65,19 +65,13 @@ namespace BFs
             try
             {
                 using HttpClient httpClient = new HttpClient();
-                HttpResponseMessage response;
-                HttpResponseMessage response2;
-
                 httpClient.DefaultRequestHeaders.Add("user-agent", ".");
 
-                response = httpClient.GetAsync($"https://api.github.com/repos/BlauFx/{ThisRepo}/releases").Result;
-                response2 = httpClient.GetAsync($"https://api.github.com/repos/BlauFx/{UpdaterRepo}/releases").Result;
+                var response = httpClient.GetStringAsync($"https://api.github.com/repos/BlauFx/{ThisRepo}/releases").Result;
+                var response2 = httpClient.GetStringAsync($"https://api.github.com/repos/BlauFx/{UpdaterRepo}/releases").Result;
 
-                response.EnsureSuccessStatusCode();
-                response2.EnsureSuccessStatusCode();
-
-                Github_Releases = JsonConvert.DeserializeObject<List<Github_Releases>>(response?.Content.ReadAsStringAsync().Result);
-                Github_ReleasesUpdater = JsonConvert.DeserializeObject<List<Github_Releases>>(response2?.Content.ReadAsStringAsync().Result);
+                Github_Releases = JsonSerializer.Deserialize<List<Github_Releases>>(response);
+                Github_ReleasesUpdater = JsonSerializer.Deserialize<List<Github_Releases>>(response2);
             }
             catch { /*It can fail due to no internet connection or being rate-limited*/ }
 
