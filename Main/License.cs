@@ -6,13 +6,12 @@ namespace BFs
 {
     public class License
     {
-        private readonly string[] license = new string[3];
+        private readonly string[] license = new string[2];
         
         public License()
         {
             license[0] = "BFs";
-            license[1] = "Newtonsoft.Json";
-            license[2] = "Updater";
+            license[1] = "Updater";
 
             string path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "Licenses");
 
