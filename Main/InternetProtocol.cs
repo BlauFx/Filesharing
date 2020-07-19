@@ -218,7 +218,7 @@ namespace BFs
             return Filesize;
         }
 
-        public static string GetFileName(NetworkStream nwStream, TcpClient client)
+        public static void GetFileName(NetworkStream nwStream, TcpClient client)
         {
             byte[] ReceiveBuffer = new byte[client.ReceiveBufferSize];
             int nwRead = nwStream.Read(ReceiveBuffer, 0, ReceiveBuffer.Length);
@@ -226,8 +226,6 @@ namespace BFs
 
             Filename = Encoding.ASCII.GetString(ReceiveBuffer, 0, nwRead);
             nwStream.Flush();
-
-            return "";
         }
 
         public static void SendFileSize(NetworkStream nwStream, long FileLength)
