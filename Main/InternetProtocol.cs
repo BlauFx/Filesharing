@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -27,29 +29,20 @@ namespace BFs
 
         public static async Task<string> DownloadIP(IPVersion IPversion)
         {
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13;
-
-            using HttpClient client = new HttpClient();
-            client.DefaultRequestHeaders.Add("user-agent", ".");
-
-            HttpResponseMessage response = null;
-
-            switch (IPversion)
+            using (HttpClient client = new HttpClient())
             {
-                case IPVersion.IPV4:
-                    response = await client.GetAsync("http://checkip.dyndns.org/");
-                    break;
-                case IPVersion.IPV6:
-                    break;
+                var IP = IPversion switch
+                {
+                    IPVersion.IPV4 => await client.GetStringAsync("https://api.ipify.org"),
+                    IPVersion.IPV6 => null,
+                    _ => throw new Exception()
+                };
+
+                if (IP != null)
+                    WriteLine("Your IP has been pasted into your clipboard");
+
+                return IP;
             }
-
-            response?.EnsureSuccessStatusCode();
-            string responseStr = response?.Content.ReadAsStringAsync().Result;
-
-            int num1 = responseStr.IndexOf("Address: ", StringComparison.Ordinal) + 9;
-            WriteLine("Your IP has been pasted into your clipboard");
-
-            return responseStr.Substring(num1, responseStr.Length - (num1 + 16));
         }
 
         public static void WriteToClipboard(string str)
