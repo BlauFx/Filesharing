@@ -228,12 +228,6 @@ namespace BFs
             IPV6
         }
 
-        public enum TransportWay
-        {
-            Receive = 0,
-            Send = 1,
-        }
-
         [DllImport("user32.dll")]
         internal static extern bool OpenClipboard(IntPtr hWndNewOwner);
 
