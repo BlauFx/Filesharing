@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -118,50 +117,35 @@ namespace BFs
             return fi;
         }
 
-        private static async Task Transport(TransportWay transportWay, NetworkStream nwStream, Stream strm, float filesize)
+        private static async Task Transport(Stream a, Stream b, float filesize)
         {
-            async Task DoWork(Stream a, Stream b)
-            {
-                DateTime CurrentTime;
-                CurrentTime = DateTime.Now;
-                int BytesSent = 0;
-                double Milliseconds = .5d;
+            DateTime CurrentTime;
+            CurrentTime = DateTime.Now;
+            int BytesSent = 0;
+            double Milliseconds = .5d;
 
-                while (true)
+            while (true)
+            {
+                int num = DoAsync ? await a.ReadAsync(buffersize, 0, buffersize.Length) : a.Read(buffersize, 0, buffersize.Length);
+                BytesSent += num;
+
+                if (num <= 0)
                 {
-                    int num = DoAsync ? await a.ReadAsync(buffersize, 0, buffersize.Length) : a.Read(buffersize, 0, buffersize.Length);
-                    BytesSent += num;
-
-                    if (num <= 0)
-                    {
-                        UpdateProgressbar(BytesSent, filesize, Milliseconds);
-                        break;
-                    }
-
-                    if (DoAsync)
-                        await b.WriteAsync(buffersize, 0, num);
-                    else
-                        b.Write(buffersize, 0, num);
-
-                    if (DateTime.Now - CurrentTime < TimeSpan.FromSeconds(Milliseconds))
-                        continue;
-
-                    CurrentTime = DateTime.Now;
                     UpdateProgressbar(BytesSent, filesize, Milliseconds);
-                    BytesSent = 0;
+                    break;
                 }
-            }
 
-            switch (transportWay)
-            {
-                case TransportWay.Receive:
-                    WriteLine("Receiving the file...");
-                    await DoWork(nwStream, strm);
-                    break;
-                case TransportWay.Send:
-                    WriteLine("Sending the file...");
-                    await DoWork(strm, nwStream);
-                    break;
+                if (DoAsync)
+                    await b.WriteAsync(buffersize, 0, num);
+                else
+                    b.Write(buffersize, 0, num);
+
+                if (DateTime.Now - CurrentTime < TimeSpan.FromSeconds(Milliseconds))
+                    continue;
+
+                CurrentTime = DateTime.Now;
+                UpdateProgressbar(BytesSent, filesize, Milliseconds);
+                BytesSent = 0;
             }
 
             Title = $"BFs {Percentage}% | Done!";
@@ -180,9 +164,10 @@ namespace BFs
             SendFileName(nwStream, fi.Name);
             await Task.Delay(1000);
 
-            using (FileStream strm = fi.OpenRead())
+            await using (FileStream strm = fi.OpenRead())
             {
-                await Transport(TransportWay.Send, nwStream, strm, fi.Length);
+                WriteLine("Sending the file...");
+                await Transport(strm, nwStream, fi.Length);
             }
         }
 
@@ -199,9 +184,10 @@ namespace BFs
             GetFileName(nwStream, client);
             await Task.Delay(1000);
 
-            using (FileStream strm = new FileStream(@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{Filename}", FileMode.OpenOrCreate))
+            await using (FileStream strm = new FileStream(@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{Filename}", FileMode.OpenOrCreate))
             {
-                await Transport(TransportWay.Receive, nwStream, strm, Filesize);
+                WriteLine("Receiving the file...");
+                await Transport(nwStream, strm, Filesize);
             }
         }
 
