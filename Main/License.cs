@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
@@ -6,12 +7,12 @@ namespace BFs
 {
     public class License
     {
-        private readonly string[] license = new string[2];
+        private readonly List<string> license = new List<string>();
         
         public License()
         {
-            license[0] = "BFs";
-            license[1] = "Updater";
+            license.Add("BFs");
+            license.Add("Updater");
 
             string path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "Licenses");
 
@@ -20,16 +21,13 @@ namespace BFs
 
             using HttpClient httpClient = new HttpClient();
 
-            for (int i = 0; i < license.Length; i++)
+            for (int i = 0; i < license.Count; i++)
             {
-                if (!File.Exists($"{path}\\{license[i]}.txt"))
-                {
-                    try
-                    {
-                        using var fs = new FileStream($"{path}\\{license[i]}.txt", FileMode.CreateNew);
-                        httpClient.GetStreamAsync($"https://raw.githubusercontent.com/BlauFx/BFs/master/Licenses/{license[i]}.txt").Result.CopyTo(fs);
-                    } catch { }
-                }
+                if (File.Exists($"{path}\\{license[i]}.txt"))
+                    continue;
+
+                using var fs = new FileStream($"{path}\\{license[i]}.txt", FileMode.CreateNew);
+                httpClient.GetStreamAsync($"https://raw.githubusercontent.com/BlauFx/BFs/master/Licenses/{license[i]}.txt").Result.CopyTo(fs);
             }
         }
     }
