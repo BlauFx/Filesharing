@@ -1,20 +1,21 @@
-using System;
+﻿using System;
+using System.IO;
 using System.Net.Sockets;
 using static System.Console;
 
 namespace BFs
 {
-    public class ReceivePortRequired
+    public class SendPortRequired
     {
-        public ReceivePortRequired()
+        public SendPortRequired()
         {
             InternetProtocol.WriteToClipboard(InternetProtocol.DownloadIP(InternetProtocol.IPVersion.IPV4).Result);
 
-            Download();
+            Sender();
             ReadLine();
         }
 
-        private async void Download()
+        private async void Sender()
         {
             try
             {
@@ -23,15 +24,15 @@ namespace BFs
                 TcpListener listener = TcpListener.Create(1604);
                 listener.Start();
 
-                using TcpClient client = await listener.AcceptTcpClientAsync();
+                using TcpClient client = listener.AcceptTcpClient();
                 using NetworkStream nwStream = client.GetStream();
 
-                client.ReceiveTimeout = int.MaxValue;
-                client.ReceiveBufferSize = InternetProtocol.buffersize.Length;
+                client.SendTimeout = int.MaxValue;
+                client.SendBufferSize = InternetProtocol.buffersize.Length;
 
                 if (client.Connected)
                 {
-                    await InternetProtocol.ReceiveLogic(client, nwStream, true);
+                    await InternetProtocol.SendLogic(nwStream, InternetProtocol.GetFile(), client.Client.RemoteEndPoint, true);
                     listener.Stop();
 
                     WriteLine("Done!");

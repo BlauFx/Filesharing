@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -95,7 +96,29 @@ namespace BFs
             return calcTime.ToString("0.0") + "s";
         }
 
-        public static async Task Transport(TransportWay transportWay, NetworkStream nwStream, Stream strm, float filesize)
+        public static FileInfo GetFile()
+        {
+            WriteLine("File: ");
+            string file = ReadLine();
+
+            if (file.StartsWith("\""))
+                file = file[1..];
+
+            if (file.EndsWith("\""))
+                file = file[0..^1];
+
+            var fi = new FileInfo(file);
+
+            if (!fi.Exists)
+            {
+                WriteLine("File does not exist");
+                return GetFile();
+            }
+
+            return fi;
+        }
+
+        private static async Task Transport(TransportWay transportWay, NetworkStream nwStream, Stream strm, float filesize)
         {
             async Task DoWork(Stream a, Stream b)
             {
@@ -142,6 +165,44 @@ namespace BFs
             }
 
             Title = $"BFs {Percentage}% | Done!";
+        }
+
+        public static async Task SendLogic(NetworkStream nwStream, FileInfo fi, EndPoint RemoteIP, bool ShowRemoteEndPoint)
+        {
+            WriteLine("Connected!");
+
+            if (ShowRemoteEndPoint)
+                WriteLine($"Connection established with {RemoteIP}");
+
+            SendFileSize(nwStream, fi.Length);
+            await Task.Delay(1000);
+
+            SendFileName(nwStream, fi.Name);
+            await Task.Delay(1000);
+
+            using (FileStream strm = fi.OpenRead())
+            {
+                await Transport(TransportWay.Send, nwStream, strm, fi.Length);
+            }
+        }
+
+        public static async Task ReceiveLogic(TcpClient client, NetworkStream nwStream, bool ShowRemoteEndPoint)
+        {
+            WriteLine("Connected!");
+
+            if (ShowRemoteEndPoint)
+                WriteLine("Connection accepted from " + client.Client.RemoteEndPoint);
+
+            GetFileSize(nwStream, client);
+            await Task.Delay(1000);
+
+            GetFileName(nwStream, client);
+            await Task.Delay(1000);
+
+            using (FileStream strm = new FileStream(@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{Filename}", FileMode.OpenOrCreate))
+            {
+                await Transport(TransportWay.Receive, nwStream, strm, Filesize);
+            }
         }
 
         public static long GetFileSize(NetworkStream nwStream, TcpClient client)

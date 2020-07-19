@@ -40,11 +40,11 @@ namespace BFs
 
             if (input == "1")
             {
-                new Send();
+                new SendNoPort();
             }
             else if (input == "2")
             {
-                new ReceiverWPort();
+                new ReceiverNoPort();
             }
         }
 

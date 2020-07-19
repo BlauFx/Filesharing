@@ -48,21 +48,21 @@ namespace BFs
 
             var input = Console.ReadLine();
 
-            foreach (var _ in input.Where(c => c < '0' || c > '9').Select(c => new { })) return;
+            foreach (var _ in input!.Where(c => c < '0' || c > '9').Select(c => new { })) return;
 
             switch (int.Parse(input))
             {
                 case 1:
-                    new SenderWPort();
+                    new SendPortRequired();
                     break;
                 case 2:
-                    new ReceiverWPort();
+                    new ReceiverNoPort();
                     break;
                 case 3:
-                    new Send();
+                    new SendNoPort();
                     break;
                 case 4:
-                    new Receive();
+                    new ReceivePortRequired();
                     break;
                 case 5:
                     new ShareViaServer(true);
