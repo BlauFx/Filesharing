@@ -35,7 +35,6 @@ namespace BFs
                 {
                     IPVersion.IPV4 => await client.GetStringAsync("https://api.ipify.org"),
                     IPVersion.IPV6 => null,
-                    _ => throw new Exception()
                 };
 
                 if (IP != null)
