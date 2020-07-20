@@ -30,32 +30,31 @@ namespace BFs
             {
                 Console.Write("A new version is available");
 
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    Console.Write("\nDo you want to download and apply the update? [y/n]: ");
-
-                    if (Console.ReadLine() == "y")
-                    {
-                        var path = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-                        string projectName = Path.GetFileName(path);
-
-                        if (!projectName.Equals("BFs", StringComparison.OrdinalIgnoreCase))
-                        {
-                            Console.WriteLine("The executable needs to be located in a folder called \"BFs\"\n\nThe reason for this is the updater deletes/replaces every file in the current location.\nThis is very dangerous if the executable is located in a very important location\nFor example the desktop or some folder with important files!");
-                            Console.ReadLine();
-                            Environment.Exit(0);
-                        }
-
-                        DownloadUpdate("Updater.exe", true);
-                        DownloadUpdate("win-x64.zip", false);
-
-                        ApplyUpdate();
-                    }
+                    Console.WriteLine("Please download the update manually\nThe Auto update feature is not supported on your platform!");
+                    return;
                 }
-                else
+
+                Console.Write("\nDo you want to download and apply the update? [y/n]: ");
+
+                if (Console.ReadLine() == "y")
                 {
-                    Console.WriteLine("Please download the update manually");
-                    Console.WriteLine("The Auto update feature is not supported on your platform!");
+                    var path = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+                    string projectName = Path.GetFileName(path);
+
+                    if (!projectName.Equals("BFs", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine(
+                            "The executable needs to be located in a folder called \"BFs\"\n\nThe reason for this is the updater deletes/replaces every file in the current location.\nThis is very dangerous if the executable is located in a very important location\nFor example the desktop or some folder with important files!");
+                        Console.ReadLine();
+                        Environment.Exit(0);
+                    }
+
+                    DownloadUpdate("Updater.exe", true);
+                    DownloadUpdate("win-x64.zip", false);
+
+                    ApplyUpdate();
                 }
             }
         }
