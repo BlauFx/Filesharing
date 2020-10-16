@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
@@ -15,7 +14,13 @@ namespace BFs
             license.Add("BFs");
             license.Add("Updater");
 
-            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "Licenses");
+            var location = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
+            
+            //If location is emtpy it means the application is self-contained
+            if (string.IsNullOrWhiteSpace(location) || string.IsNullOrEmpty(location))
+                return;
+
+            string path = Path.Combine(location, "Licenses");
 
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);

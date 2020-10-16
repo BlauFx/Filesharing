@@ -17,31 +17,30 @@ namespace BFs
     {
         public static byte[] buffersize = new byte[8192];
 
-        public static long Current { get; set; } = 0;
+        private static long Current { get; set; } = 0;
 
-        public static long Filesize { get; set; } = 0;
+        private static long Filesize { get; set; } = 0;
 
-        public static string Filename { get; set; } = string.Empty;
+        private static string Filename { get; set; } = string.Empty;
 
-        public static int Percentage { get; private set; } = 0;
+        private static int Percentage { get; set; } = 0;
 
         public static bool DoAsync { get; set; } = false;
 
         public static async Task<string> DownloadIP(IPVersion IPversion)
         {
-            using (HttpClient client = new HttpClient())
+            using HttpClient client = new HttpClient();
+            
+            var IP = IPversion switch
             {
-                var IP = IPversion switch
-                {
-                    IPVersion.IPV4 => await client.GetStringAsync("https://api.ipify.org"),
-                    IPVersion.IPV6 => null,
-                };
+                IPVersion.IPV4 => await client.GetStringAsync("https://api.ipify.org"),
+                _ => null
+            };
 
-                if (IP != null)
-                    WriteLine("Your IP has been pasted into your clipboard");
+            if (IP != null)
+                WriteLine("Your IP has been pasted into your clipboard");
 
-                return IP;
-            }
+            return IP;
         }
 
         public static void WriteToClipboard(string str)
@@ -56,7 +55,7 @@ namespace BFs
             }
         }
 
-        public static void UpdateProgressbar(int num, float filesize, double ElapsedSeconds)
+        private static void UpdateProgressbar(int num, float filesize, double ElapsedSeconds)
         {
             if (Current < filesize)
                 Current += num;
@@ -68,8 +67,8 @@ namespace BFs
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static double CalcTransferSpeed(double Filesize, double time)
-            => (Filesize / 1000 / 1000) / time;
+        private static double CalcTransferSpeed(double filesize, double time)
+            => (filesize / 1000 / 1000) / time;
 
         private static string CalcEstimatedTime(float filesize, double speed)
         {
@@ -92,11 +91,14 @@ namespace BFs
             WriteLine("File: ");
             string file = ReadLine();
 
+            if (string.IsNullOrEmpty(file))
+                throw new ArgumentNullException(file);
+            
             if (file.StartsWith("\""))
                 file = file[1..];
 
             if (file.EndsWith("\""))
-                file = file[0..^1];
+                file = file[..^1];
 
             var fi = new FileInfo(file);
 
@@ -111,8 +113,7 @@ namespace BFs
 
         private static async Task Transport(Stream a, Stream b, float filesize)
         {
-            DateTime CurrentTime;
-            CurrentTime = DateTime.Now;
+            var CurrentTime = DateTime.Now;
             int BytesSent = 0;
             double Milliseconds = .5d;
 
@@ -156,11 +157,9 @@ namespace BFs
             SendFileName(nwStream, fi.Name);
             await Task.Delay(1000);
 
-            await using (FileStream strm = fi.OpenRead())
-            {
-                WriteLine("Sending the file...");
-                await Transport(strm, nwStream, fi.Length);
-            }
+            await using FileStream strm = fi.OpenRead();
+            WriteLine("Sending the file...");
+            await Transport(strm, nwStream, fi.Length);
         }
 
         public static async Task ReceiveLogic(TcpClient client, NetworkStream nwStream, bool ShowRemoteEndPoint)
@@ -176,14 +175,12 @@ namespace BFs
             GetFileName(nwStream, client);
             await Task.Delay(1000);
 
-            await using (FileStream strm = new FileStream(@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{Filename}", FileMode.OpenOrCreate))
-            {
-                WriteLine("Receiving the file...");
-                await Transport(nwStream, strm, Filesize);
-            }
+            await using FileStream strm = new FileStream(@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{Filename}", FileMode.OpenOrCreate);
+            WriteLine("Receiving the file...");
+            await Transport(nwStream, strm, Filesize);
         }
 
-        public static void GetFileSize(NetworkStream nwStream, TcpClient client)
+        private static void GetFileSize(NetworkStream nwStream, TcpClient client)
         {
             byte[] ReceiveBuffer = new byte[client.ReceiveBufferSize];
             int nwRead = nwStream.Read(ReceiveBuffer, 0, ReceiveBuffer.Length);
@@ -195,7 +192,7 @@ namespace BFs
             Filesize = long.Parse(tmp);
         }
 
-        public static void GetFileName(NetworkStream nwStream, TcpClient client)
+        private static void GetFileName(NetworkStream nwStream, TcpClient client)
         {
             byte[] ReceiveBuffer = new byte[client.ReceiveBufferSize];
             int nwRead = nwStream.Read(ReceiveBuffer, 0, ReceiveBuffer.Length);
@@ -205,18 +202,18 @@ namespace BFs
             nwStream.Flush();
         }
 
-        public static void SendFileSize(NetworkStream nwStream, long FileLength)
+        private static void SendFileSize(NetworkStream nwStream, long FileLength)
         {
             WriteLine("Sending the filesize...");
-            byte[] name = Encoding.ASCII.GetBytes(FileLength.ToString());
+            byte[] name = Encoding.UTF8.GetBytes(FileLength.ToString());
             nwStream.Write(name, 0, name.Length);
             nwStream.Flush();
         }
 
-        public static void SendFileName(NetworkStream nwStream, string FileName)
+        private static void SendFileName(NetworkStream nwStream, string FileName)
         {
             WriteLine("Sending the filename...");
-            byte[] name = Encoding.ASCII.GetBytes(FileName);
+            byte[] name = Encoding.UTF8.GetBytes(FileName);
             nwStream.Write(name, 0, name.Length);
             nwStream.Flush();
         }

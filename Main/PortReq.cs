@@ -1,20 +1,20 @@
-using System;
+﻿using System;
 using System.Net.Sockets;
 using static System.Console;
 
 namespace BFs
 {
-    public class ReceivePortRequired
+    public class PortReq
     {
-        public ReceivePortRequired()
+        public PortReq(bool Receive)
         {
             InternetProtocol.WriteToClipboard(InternetProtocol.DownloadIP(InternetProtocol.IPVersion.IPV4).Result);
 
-            Download();
+            Start(Receive);
             ReadLine();
         }
 
-        private async void Download()
+        private async void Start(bool Receive)
         {
             try
             {
@@ -31,9 +31,12 @@ namespace BFs
 
                 if (client.Connected)
                 {
-                    await InternetProtocol.ReceiveLogic(client, nwStream, true);
-                    listener.Stop();
+                    if (Receive)
+                        await InternetProtocol.ReceiveLogic(client, nwStream, true);
+                    else
+                        await InternetProtocol.SendLogic(nwStream, InternetProtocol.GetFile(), client.Client.RemoteEndPoint, true);
 
+                    listener.Stop();
                     WriteLine("Done!");
                 }
             }

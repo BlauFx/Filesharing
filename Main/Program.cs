@@ -19,7 +19,7 @@ namespace BFs
                 }
             }
 
-            new License();
+           new License();
             // new Updater();
 
             Console.Title = "BFs";
@@ -38,16 +38,16 @@ namespace BFs
             switch (int.Parse(input))
             {
                 case 1:
-                    new SendPortRequired();
+                    new PortReq(false);
                     break;
                 case 2:
-                    new ReceiverNoPort();
+                    new NoPortReq(false);
                     break;
                 case 3:
-                    new SendNoPort();
+                    new NoPortReq(true);
                     break;
                 case 4:
-                    new ReceivePortRequired();
+                    new PortReq(true);
                     break;
             }
         }

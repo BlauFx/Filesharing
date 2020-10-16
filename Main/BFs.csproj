@@ -2,10 +2,11 @@
 
     <PropertyGroup>
       <OutputType>Exe</OutputType>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>net5.0</TargetFramework>
         <ApplicationIcon>BlauFx.ico</ApplicationIcon>
         <AssemblyName>BFs</AssemblyName>
         <RootNamespace>BFs</RootNamespace>
         <StartupObject>BFs.Program</StartupObject>
+        <LangVersion>9</LangVersion>
     </PropertyGroup>
 </Project>
