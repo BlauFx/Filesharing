@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
@@ -14,7 +15,7 @@ namespace BFs
             license.Add("BFs");
             license.Add("Updater");
 
-            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "Licenses");
+            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "Licenses");
 
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
@@ -26,8 +27,15 @@ namespace BFs
                 if (File.Exists($"{path}\\{license[i]}.txt"))
                     continue;
 
-                using var fs = new FileStream($"{path}\\{license[i]}.txt", FileMode.CreateNew);
-                httpClient.GetStreamAsync($"https://raw.githubusercontent.com/BlauFx/BFs/master/Licenses/{license[i]}.txt").Result.CopyTo(fs);
+                try
+                {
+                    using var fs = new FileStream($"{path}\\{license[i]}.txt", FileMode.CreateNew);
+                    httpClient.GetStreamAsync($"https://raw.githubusercontent.com/BlauFx/BFs/master/Licenses/{license[i]}.txt").Result.CopyTo(fs);
+                }
+                catch
+                {
+                    // ignored
+                }
             }
         }
     }

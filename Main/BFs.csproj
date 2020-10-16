@@ -8,10 +8,4 @@
         <RootNamespace>BFs</RootNamespace>
         <StartupObject>BFs.Program</StartupObject>
     </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-      <DebugType>none</DebugType>
-      <DebugSymbols>false</DebugSymbols>
-    </PropertyGroup>
-
 </Project>

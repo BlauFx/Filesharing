@@ -182,8 +182,5 @@ namespace BFs
 
         [JsonPropertyName("browser_download_url")]
         public string Browser_download_url { get; set; }
-
-        [JsonPropertyName("assets")]
-        public List<AssetsClass> Assets { get; set; }
     }
 }

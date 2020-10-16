@@ -7,31 +7,20 @@ namespace BFs
     {
         public static void Main(string[] args)
         {
-            new License();
-
             if (args.Length > 0)
             {
-                bool[] IsAvailable = new bool[2];
-
                 foreach (string arg in args)
                 {
-                    if (arg.Equals("--noupdate", StringComparison.OrdinalIgnoreCase))
-                        IsAvailable[0] = true;
-                    else if (arg.Equals("--async", StringComparison.OrdinalIgnoreCase))
-                        IsAvailable[1] = true;
-                }
-
-                if (IsAvailable[0])
-                    new Updater();
-
-                if (IsAvailable[1])
-                {
-                    InternetProtocol.DoAsync = true;
-                    Console.WriteLine("Async is enabled!\n");
+                    if (arg.Equals("--async", StringComparison.OrdinalIgnoreCase))
+                    {
+                        InternetProtocol.DoAsync = true;
+                        Console.WriteLine("Async is enabled!\n");
+                    }
                 }
             }
-            else
-                new Updater();
+
+            new License();
+            // new Updater();
 
             Console.Title = "BFs";
             Console.WriteLine("Welcome to BFs (BlauFx filesharing)\n" +
@@ -41,14 +30,10 @@ namespace BFs
                 "------------------\n" +
                 "3: Send a file | No Port req.\n" +
                 "4: Receive a file | Port req.\n" +
-                "------------------\n" +
-                "5: Connect to a server\n" +
-                "6: Create a server\n" +
                 "------------------");
 
             var input = Console.ReadLine();
-
-            foreach (var _ in input!.Where(c => c < '0' || c > '9').Select(c => new { })) return;
+            foreach (var _ in input!.Where(c => c < '0' || c > '4').Select(c => new { })) return;
 
             switch (int.Parse(input))
             {
@@ -63,12 +48,6 @@ namespace BFs
                     break;
                 case 4:
                     new ReceivePortRequired();
-                    break;
-                case 5:
-                    new ShareViaServer(true);
-                    break;
-                case 6:
-                    new ShareViaServer(false);
                     break;
             }
         }
