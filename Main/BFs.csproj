@@ -7,6 +7,5 @@
         <AssemblyName>BFs</AssemblyName>
         <RootNamespace>BFs</RootNamespace>
         <StartupObject>BFs.Program</StartupObject>
-        <LangVersion>9</LangVersion>
     </PropertyGroup>
 </Project>

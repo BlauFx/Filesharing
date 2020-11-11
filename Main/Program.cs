@@ -9,13 +9,10 @@ namespace BFs
         {
             if (args.Length > 0)
             {
-                foreach (string arg in args)
+                if (args.Contains("--async"))
                 {
-                    if (arg.Equals("--async", StringComparison.OrdinalIgnoreCase))
-                    {
-                        InternetProtocol.DoAsync = true;
-                        Console.WriteLine("Async is enabled!\n");
-                    }
+                    InternetProtocol.DoAsync = true;
+                    Console.WriteLine("Async is enabled!\n");
                 }
             }
 
