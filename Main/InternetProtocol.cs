@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -30,7 +28,7 @@ namespace BFs
         public static async Task<string> DownloadIP(IPVersion IPversion)
         {
             using HttpClient client = new HttpClient();
-            
+
             var IP = IPversion switch
             {
                 IPVersion.IPV4 => await client.GetStringAsync("https://api.ipify.org"),
@@ -93,7 +91,7 @@ namespace BFs
 
             if (string.IsNullOrEmpty(file))
                 throw new ArgumentNullException(file);
-            
+
             if (file.StartsWith("\""))
                 file = file[1..];
 
@@ -186,7 +184,7 @@ namespace BFs
             int nwRead = nwStream.Read(ReceiveBuffer, 0, ReceiveBuffer.Length);
             WriteLine("Receiving the filesize...");
 
-            string tmp = Encoding.ASCII.GetString(ReceiveBuffer, 0, nwRead);
+            string tmp = Encoding.UTF8.GetString(ReceiveBuffer, 0, nwRead);
             nwStream.Flush();
 
             Filesize = long.Parse(tmp);
@@ -198,7 +196,7 @@ namespace BFs
             int nwRead = nwStream.Read(ReceiveBuffer, 0, ReceiveBuffer.Length);
             WriteLine("Receiving the filename...");
 
-            Filename = Encoding.ASCII.GetString(ReceiveBuffer, 0, nwRead);
+            Filename = Encoding.UTF8.GetString(ReceiveBuffer, 0, nwRead);
             nwStream.Flush();
         }
 
