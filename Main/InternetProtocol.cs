@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -50,6 +51,28 @@ namespace BFs
                 SetClipboardData(13, ptr);
                 CloseClipboard();
                 Marshal.FreeHGlobal(ptr);
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                var tempStr = $"echo {str} | xclip";
+                var arguments = $"-c \"{tempStr}\"";
+
+                using (var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "bash",
+                        Arguments = arguments,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = false,
+                    }
+                })
+                {
+                    process.Start();
+                }
+
             }
         }
 
@@ -222,6 +245,7 @@ namespace BFs
             IPV6
         }
 
+#region WINDOWS
         [DllImport("user32.dll")]
         internal static extern bool OpenClipboard(IntPtr hWndNewOwner);
 
@@ -230,5 +254,6 @@ namespace BFs
 
         [DllImport("user32.dll")]
         internal static extern bool SetClipboardData(uint uFormat, IntPtr data);
+#endregion
     }
 }
