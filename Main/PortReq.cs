@@ -23,7 +23,7 @@ namespace BFs
                 TcpListener listener = TcpListener.Create(1604);
                 listener.Start();
 
-                using TcpClient client = await listener.AcceptTcpClientAsync();
+                using TcpClient client = listener.AcceptTcpClient();
                 using NetworkStream nwStream = client.GetStream();
 
                 client.ReceiveTimeout = int.MaxValue;
