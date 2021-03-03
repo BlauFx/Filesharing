@@ -8,7 +8,7 @@ namespace BFs
     {
         public PortReq(bool Receive)
         {
-            InternetProtocol.WriteToClipboard(InternetProtocol.DownloadIP(InternetProtocol.IPVersion.IPV4).Result);
+            InternetProtocol.WriteToClipboard(InternetProtocol.DownloadIP(InternetProtocol.Ipv6 ? InternetProtocol.IPVersion.IPV6 : InternetProtocol.IPVersion.IPV4).Result);
 
             Start(Receive);
             ReadLine();

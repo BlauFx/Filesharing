@@ -16,28 +16,29 @@ namespace BFs
     {
         public static byte[] buffersize = new byte[8192];
 
-        private static long Current { get; set; } = 0;
+        private static long Current { get; set; }
 
-        private static long Filesize { get; set; } = 0;
+        private static long Filesize { get; set; }
 
         private static string Filename { get; set; } = string.Empty;
 
-        private static int Percentage { get; set; } = 0;
+        private static int Percentage { get; set; }
 
-        public static bool DoAsync { get; set; } = false;
+        public static bool DoAsync { get; set; }
 
-        public static async Task<string> DownloadIP(IPVersion IPversion)
+        public static bool Ipv6 { get; set; }
+
+        public static async Task<string> DownloadIP(IPVersion version)
         {
             using HttpClient client = new HttpClient();
 
-            var IP = IPversion switch
+            var IP = version switch
             {
                 IPVersion.IPV4 => await client.GetStringAsync("https://api.ipify.org"),
-                _ => null
+                IPVersion.IPV6 => await client.GetStringAsync("https://api64.ipify.org/"),
             };
 
-            if (IP != null)
-                WriteLine("Your IP has been pasted into your clipboard");
+            WriteLine("Your IP has been pasted into your clipboard");
 
             return IP;
         }
@@ -83,8 +84,8 @@ namespace BFs
 
             Percentage = (int)Math.Round((double)(100f * Current) / filesize);
 
-            double Transferspeed = CalcTransferSpeed(num, ElapsedSeconds);
-            Title = $"BFs {Percentage}% | {Transferspeed:0.0} MB/s | Estimated transfer time: {CalcEstimatedTime(filesize - Current, Transferspeed)}";
+            double transferspeed = CalcTransferSpeed(num, ElapsedSeconds);
+            Title = $"BFs {Percentage}% | {transferspeed:0.0} MB/s | Estimated transfer time: {CalcEstimatedTime(filesize - Current, transferspeed)}";
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -123,13 +124,11 @@ namespace BFs
 
             var fi = new FileInfo(file);
 
-            if (!fi.Exists)
-            {
-                WriteLine("File does not exist");
-                return GetFile();
-            }
+            if (fi.Exists)
+                return fi;
 
-            return fi;
+            WriteLine("File does not exist");
+            return GetFile();
         }
 
         private static async Task Transport(Stream a, Stream b, float filesize)
@@ -162,7 +161,7 @@ namespace BFs
                 BytesSent = 0;
             }
 
-            Title = $"BFs {Percentage}% | Done!";
+            Title = $"{Percentage}% | Done!";
         }
 
         public static async Task SendLogic(NetworkStream nwStream, FileInfo fi, EndPoint RemoteIP, bool ShowRemoteEndPoint)
@@ -172,10 +171,10 @@ namespace BFs
             if (ShowRemoteEndPoint)
                 WriteLine($"Connection established with {RemoteIP}");
 
-            SendFileSize(nwStream, fi.Length);
+            SendFileText(nwStream, fi.Length.ToString(), "filesize");
             await Task.Delay(1000);
 
-            SendFileName(nwStream, fi.Name);
+            SendFileText(nwStream, fi.Name, "filename");
             await Task.Delay(1000);
 
             await using FileStream strm = fi.OpenRead();
@@ -196,46 +195,37 @@ namespace BFs
             GetFileName(nwStream, client);
             await Task.Delay(1000);
 
-            await using FileStream strm = new FileStream(@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\{Filename}", FileMode.OpenOrCreate);
+            await using FileStream strm = new FileStream(@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}{Path.DirectorySeparatorChar}{Filename}", FileMode.OpenOrCreate);
             WriteLine("Receiving the file...");
             await Transport(nwStream, strm, Filesize);
         }
 
-        private static void GetFileSize(NetworkStream nwStream, TcpClient client)
-        {
-            byte[] ReceiveBuffer = new byte[client.ReceiveBufferSize];
-            int nwRead = nwStream.Read(ReceiveBuffer, 0, ReceiveBuffer.Length);
-            WriteLine("Receiving the filesize...");
+        private static void GetFileSize(NetworkStream nwStream, TcpClient client) => Filesize = long.Parse(ReceiveFileBytes(nwStream, client, "filesize"));
 
-            string tmp = Encoding.UTF8.GetString(ReceiveBuffer, 0, nwRead);
+        private static void GetFileName(NetworkStream nwStream, TcpClient client) => Filename = ReceiveFileBytes(nwStream, client, "filename");
+
+        private static string ReceiveFileBytes(NetworkStream nwStream, TcpClient client, string text = null)
+        {
+            byte[] receiveBuffer = new byte[client.ReceiveBufferSize];
+            int nwRead = nwStream.Read(receiveBuffer, 0, receiveBuffer.Length);
+
+            if (text is not null)
+                WriteLine($"Receiving {text}...");
+
+            var str = Encoding.UTF8.GetString(receiveBuffer, 0, nwRead);
             nwStream.Flush();
 
-            Filesize = long.Parse(tmp);
+            return str;
         }
 
-        private static void GetFileName(NetworkStream nwStream, TcpClient client)
-        {
-            byte[] ReceiveBuffer = new byte[client.ReceiveBufferSize];
-            int nwRead = nwStream.Read(ReceiveBuffer, 0, ReceiveBuffer.Length);
-            WriteLine("Receiving the filename...");
+        private static void SendFileText(NetworkStream nwStream, string fileName, string text = null) => SendFileBytes(nwStream, Encoding.UTF8.GetBytes(fileName), text);
 
-            Filename = Encoding.UTF8.GetString(ReceiveBuffer, 0, nwRead);
-            nwStream.Flush();
-        }
-
-        private static void SendFileSize(NetworkStream nwStream, long FileLength)
+        private static void SendFileBytes(NetworkStream nwStream, byte[] bytes, string text = null)
         {
-            WriteLine("Sending the filesize...");
-            byte[] name = Encoding.UTF8.GetBytes(FileLength.ToString());
-            nwStream.Write(name, 0, name.Length);
-            nwStream.Flush();
-        }
+            if (text is not null)
+                WriteLine($"Sending {text}...");
 
-        private static void SendFileName(NetworkStream nwStream, string FileName)
-        {
-            WriteLine("Sending the filename...");
-            byte[] name = Encoding.UTF8.GetBytes(FileName);
-            nwStream.Write(name, 0, name.Length);
+            nwStream.Write(bytes, 0, bytes.Length);
             nwStream.Flush();
         }
 

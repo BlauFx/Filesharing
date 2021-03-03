@@ -14,6 +14,12 @@ namespace BFs
                     InternetProtocol.DoAsync = true;
                     Console.WriteLine("Async is enabled!\n");
                 }
+
+                if (args.Contains("--ipv6"))
+                {
+                    InternetProtocol.Ipv6 = true;
+                    Console.WriteLine("IPv6 is enabled!\n");
+                }
             }
 
            new License();
