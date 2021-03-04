@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace BFs
+namespace Filesharing
 {
     public class Program
     {
@@ -22,11 +22,8 @@ namespace BFs
                 }
             }
 
-           new License();
-            // new Updater();
-
-            Console.Title = "BFs";
-            Console.WriteLine("Welcome to BFs (BlauFx filesharing)\n" +
+            Console.Title = "Filesharing";
+            Console.WriteLine("Welcome\n" +
                 "What do you want to do?\n" +
                 "1: Send a file | Port Req.\n" +
                 "2: Receive a file | No Port req.\n" +

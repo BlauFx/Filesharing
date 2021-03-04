@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Console;
 
-namespace BFs
+namespace Filesharing
 {
     public static class InternetProtocol
     {
@@ -85,7 +85,7 @@ namespace BFs
             Percentage = (int)Math.Round((double)(100f * Current) / filesize);
 
             double transferspeed = CalcTransferSpeed(num, ElapsedSeconds);
-            Title = $"BFs {Percentage}% | {transferspeed:0.0} MB/s | Estimated transfer time: {CalcEstimatedTime(filesize - Current, transferspeed)}";
+            Title = $"{Percentage}% | {transferspeed:0.0} MB/s | Estimated transfer time: {CalcEstimatedTime(filesize - Current, transferspeed)}";
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

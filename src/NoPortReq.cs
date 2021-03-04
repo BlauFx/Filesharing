@@ -3,7 +3,7 @@ using System.IO;
 using System.Net.Sockets;
 using static System.Console;
 
-namespace BFs
+namespace Filesharing
 {
     public class NoPortReq
     {
