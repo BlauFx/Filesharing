@@ -1,4 +1,3 @@
-# BFs
-Filesharing
+# Filesharing
 
-![.NET Core](https://github.com/BlauFx/BFs/workflows/.NET%20Core/badge.svg)
+![.NET Core](https://github.com/BlauFx/Filesharing/actions/workflows/dotnetcore.yml/badge.svg?branch=master)
