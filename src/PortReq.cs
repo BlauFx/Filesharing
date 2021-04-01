@@ -6,32 +6,32 @@ namespace Filesharing
 {
     public class PortReq
     {
-        public PortReq(bool Receive)
+        public PortReq(bool receive)
         {
-            InternetProtocol.WriteToClipboard(InternetProtocol.DownloadIP(InternetProtocol.Ipv6 ? InternetProtocol.IPVersion.IPV6 : InternetProtocol.IPVersion.IPV4).Result);
+            InternetProtocol.WriteToClipboard(InternetProtocol.GetIP(InternetProtocol.Ipv6 ? InternetProtocol.IPVersion.IPV6 : InternetProtocol.IPVersion.IPV4).Result);
 
-            Start(Receive);
+            Start(receive);
             ReadLine();
         }
 
-        private async void Start(bool Receive)
+        private async void Start(bool receive)
         {
             try
             {
                 WriteLine("Waiting for a connection...");
 
-                TcpListener listener = TcpListener.Create(1604);
+                TcpListener listener = TcpListener.Create(InternetProtocol.Port);
                 listener.Start();
 
                 using TcpClient client = listener.AcceptTcpClient();
                 using NetworkStream nwStream = client.GetStream();
 
-                client.ReceiveTimeout = int.MaxValue;
+                client.ReceiveTimeout = int.MaxValue; //TODO:
                 client.ReceiveBufferSize = InternetProtocol.buffersize.Length;
 
                 if (client.Connected)
                 {
-                    if (Receive)
+                    if (receive)
                         await InternetProtocol.ReceiveLogic(client, nwStream, true);
                     else
                         await InternetProtocol.SendLogic(nwStream, InternetProtocol.GetFile(), client.Client.RemoteEndPoint, true);
@@ -39,6 +39,11 @@ namespace Filesharing
                     listener.Stop();
                     WriteLine("Done!");
                 }
+            }
+            catch (TimeoutException)
+            {
+                WriteLine("Timeout");
+                Start(receive);
             }
             catch (Exception e)
             {
