@@ -28,14 +28,17 @@ namespace Filesharing
 
         public static bool Ipv6 { get; set; }
 
-        public static async Task<string> DownloadIP(IPVersion version)
+        public static int Port { get; } = 1604;
+
+        public static async Task<string> GetIP(IPVersion version)
         {
             using HttpClient client = new HttpClient();
 
             var IP = version switch
             {
-                IPVersion.IPV4 => await client.GetStringAsync("https://api.ipify.org"),
                 IPVersion.IPV6 => await client.GetStringAsync("https://api64.ipify.org/"),
+                IPVersion.IPV4 => await client.GetStringAsync("https://api.ipify.org"),
+                _ => throw new Exception($"{version} must be either IPV6 or IPV4")
             };
 
             WriteLine("Your IP has been pasted into your clipboard");
@@ -231,8 +234,8 @@ namespace Filesharing
 
         public enum IPVersion
         {
-            IPV4,
-            IPV6
+            IPV6,
+            IPV4
         }
 
 #region WINDOWS
