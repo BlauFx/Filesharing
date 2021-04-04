@@ -24,7 +24,7 @@ namespace Filesharing
                 listener.Start();
 
                 using TcpClient client = listener.AcceptTcpClient();
-                using NetworkStream nwStream = client.GetStream();
+                await using NetworkStream nwStream = client.GetStream();
 
                 client.ChangeTimeout();
                 client.ChangeBuffer();

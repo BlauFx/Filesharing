@@ -37,7 +37,7 @@ namespace Filesharing
                 client.ChangeTimeout();
                 client.ChangeBuffer();
 
-                using NetworkStream nwStream = client.GetStream();
+                await using NetworkStream nwStream = client.GetStream();
 
                 if (client.Connected)
                 {
