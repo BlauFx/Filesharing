@@ -10,72 +10,48 @@ namespace Filesharing
         public NoPortReq(bool send)
         {
             if (send)
-                Send(null, null);
+                HandelConnection(null,true);
             else
-                Receive(null);
+                HandelConnection(null);
 
             ReadLine();
         }
 
-        private async void Send(string IP, FileInfo fi)
+        private async void HandelConnection(string ip, bool isSend = false, FileInfo fi = null)
         {
-            if (IP == null)
+            if (ip == null)
             {
                 WriteLine("Enter the IP");
-                IP = ReadLine();
+                ip = ReadLine();
             }
 
-            fi ??= InternetProtocol.GetFile();
+            if (isSend)
+                fi ??= InternetProtocol.GetFile();
 
             try
             {
                 WriteLine("Trying to connect...");
 
-                using TcpClient client = new TcpClient(IP, 1604) { SendTimeout = int.MaxValue, SendBufferSize = InternetProtocol.buffersize.Length };
+                using TcpClient client = new TcpClient(ip ?? throw new ArgumentNullException(nameof(ip)), InternetProtocol.Port);
+
+                client.ChangeTimeout();
+                client.ChangeBuffer();
+
                 using NetworkStream nwStream = client.GetStream();
 
                 if (client.Connected)
                 {
-                    await InternetProtocol.SendLogic(nwStream, fi, client.Client.RemoteEndPoint, false);
+                    if (isSend)
+                        await InternetProtocol.Send(nwStream, fi, client.Client.RemoteEndPoint, true);
+                    else
+                        await InternetProtocol.Receive(client, nwStream, true);
                     WriteLine("Done!");
                 }
             }
             catch (TimeoutException)
             {
-                WriteLine("Couldn't connect \nretrying...");
-                Send(IP, fi);
-            }
-            catch (Exception e)
-            {
-                WriteLine(e.Message);
-            }
-        }
-
-        private async void Receive(string IP)
-        {
-            if (IP == null)
-            {
-                WriteLine("Enter the IP");
-                IP = ReadLine();
-            }
-            
-            try
-            {
-                WriteLine("Trying to connect...");
-
-                using TcpClient client = new TcpClient(IP, 1604) { ReceiveTimeout = int.MaxValue, ReceiveBufferSize = InternetProtocol.buffersize.Length };
-                using NetworkStream nwStream = client.GetStream();
-
-                if (client.Connected)
-                {
-                    await InternetProtocol.ReceiveLogic(client, nwStream, false);
-                    WriteLine("Done!");
-                }
-            }
-            catch (TimeoutException)
-            {
-                WriteLine("Couldn't connect \nretrying...");
-                Receive(IP);
+                WriteLine(isSend ? "Timeout \nretrying..." : "Couldn't connect \nretrying...");
+                HandelConnection(ip, isSend, fi);
             }
             catch (Exception e)
             {

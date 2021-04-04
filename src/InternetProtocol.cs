@@ -14,7 +14,7 @@ namespace Filesharing
 {
     public static class InternetProtocol
     {
-        public static byte[] buffersize = new byte[8192];
+        private static byte[] buffersize = new byte[8192];
 
         private static long Current { get; set; }
 
@@ -92,8 +92,7 @@ namespace Filesharing
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static double CalcTransferSpeed(double filesize, double time)
-            => (filesize / 1000 / 1000) / time;
+        private static double CalcTransferSpeed(double filesize, double time) => (filesize / 1000 / 1000) / time;
 
         private static string CalcEstimatedTime(float filesize, double speed)
         {
@@ -119,10 +118,10 @@ namespace Filesharing
             if (string.IsNullOrEmpty(file))
                 throw new ArgumentNullException(file);
 
-            if (file.StartsWith("\""))
+            if (file.StartsWith("\"") || file.StartsWith("\'"))
                 file = file[1..];
 
-            if (file.EndsWith("\""))
+            if (file.EndsWith("\"") || file.EndsWith("\'"))
                 file = file[..^1];
 
             var fi = new FileInfo(file);
@@ -134,20 +133,24 @@ namespace Filesharing
             return GetFile();
         }
 
+        public static void ChangeTimeout(this TcpClient client) => client.SendTimeout = client.ReceiveTimeout = int.MaxValue;
+
+        public static void ChangeBuffer(this TcpClient client) => client.SendBufferSize = client.ReceiveBufferSize = buffersize.Length;
+
         private static async Task Transport(Stream a, Stream b, float filesize)
         {
-            var CurrentTime = DateTime.Now;
-            int BytesSent = 0;
+            var currentTime = DateTime.Now;
+            int bytesSent = 0;
             double Milliseconds = .5d;
 
             while (true)
             {
                 int num = DoAsync ? await a.ReadAsync(buffersize, 0, buffersize.Length) : a.Read(buffersize, 0, buffersize.Length);
-                BytesSent += num;
+                bytesSent += num;
 
                 if (num <= 0)
                 {
-                    UpdateProgressbar(BytesSent, filesize, Milliseconds);
+                    UpdateProgressbar(bytesSent, filesize, Milliseconds);
                     break;
                 }
 
@@ -156,28 +159,28 @@ namespace Filesharing
                 else
                     b.Write(buffersize, 0, num);
 
-                if (DateTime.Now - CurrentTime < TimeSpan.FromSeconds(Milliseconds))
+                if (DateTime.Now - currentTime < TimeSpan.FromSeconds(Milliseconds))
                     continue;
 
-                CurrentTime = DateTime.Now;
-                UpdateProgressbar(BytesSent, filesize, Milliseconds);
-                BytesSent = 0;
+                currentTime = DateTime.Now;
+                UpdateProgressbar(bytesSent, filesize, Milliseconds);
+                bytesSent = 0;
             }
 
             Title = $"{Percentage}% | Done!";
         }
 
-        public static async Task SendLogic(NetworkStream nwStream, FileInfo fi, EndPoint RemoteIP, bool ShowRemoteEndPoint)
+        public static async Task Send(NetworkStream nwStream, FileInfo fi, EndPoint remoteIp, bool showRemoteEndPoint)
         {
             WriteLine("Connected!");
 
-            if (ShowRemoteEndPoint)
-                WriteLine($"Connection established with {RemoteIP}");
+            if (showRemoteEndPoint)
+                WriteLine($"Connection established with {remoteIp}");
 
-            SendFileText(nwStream, fi.Length.ToString(), "filesize");
+            SendText(nwStream, fi.Length.ToString(), "filesize");
             await Task.Delay(1000);
 
-            SendFileText(nwStream, fi.Name, "filename");
+            SendText(nwStream, fi.Name, "filename");
             await Task.Delay(1000);
 
             await using FileStream strm = fi.OpenRead();
@@ -185,12 +188,12 @@ namespace Filesharing
             await Transport(strm, nwStream, fi.Length);
         }
 
-        public static async Task ReceiveLogic(TcpClient client, NetworkStream nwStream, bool ShowRemoteEndPoint)
+        public static async Task Receive(TcpClient client, NetworkStream nwStream, bool showRemoteEndPoint)
         {
             WriteLine("Connected!");
 
-            if (ShowRemoteEndPoint)
-                WriteLine("Connection accepted from " + client.Client.RemoteEndPoint);
+            if (showRemoteEndPoint)
+                WriteLine($"Connection accepted from {client.Client.RemoteEndPoint}");
 
             GetFileSize(nwStream, client);
             await Task.Delay(1000);
@@ -221,7 +224,7 @@ namespace Filesharing
             return str;
         }
 
-        private static void SendFileText(NetworkStream nwStream, string fileName, string text = null) => SendFileBytes(nwStream, Encoding.UTF8.GetBytes(fileName), text);
+        private static void SendText(NetworkStream nwStream, string fileName, string text = null) => SendFileBytes(nwStream, Encoding.UTF8.GetBytes(fileName), text);
 
         private static void SendFileBytes(NetworkStream nwStream, byte[] bytes, string text = null)
         {

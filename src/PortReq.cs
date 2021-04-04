@@ -26,15 +26,15 @@ namespace Filesharing
                 using TcpClient client = listener.AcceptTcpClient();
                 using NetworkStream nwStream = client.GetStream();
 
-                client.ReceiveTimeout = int.MaxValue; //TODO:
-                client.ReceiveBufferSize = InternetProtocol.buffersize.Length;
+                client.ChangeTimeout();
+                client.ChangeBuffer();
 
                 if (client.Connected)
                 {
                     if (receive)
-                        await InternetProtocol.ReceiveLogic(client, nwStream, true);
+                        await InternetProtocol.Receive(client, nwStream, true);
                     else
-                        await InternetProtocol.SendLogic(nwStream, InternetProtocol.GetFile(), client.Client.RemoteEndPoint, true);
+                        await InternetProtocol.Send(nwStream, InternetProtocol.GetFile(), client.Client.RemoteEndPoint, true);
 
                     listener.Stop();
                     WriteLine("Done!");
