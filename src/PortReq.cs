@@ -29,16 +29,14 @@ namespace Filesharing
                 client.ChangeTimeout();
                 client.ChangeBuffer();
 
-                if (client.Connected)
-                {
-                    if (receive)
-                        await InternetProtocol.Receive(client, nwStream, true);
-                    else
-                        await InternetProtocol.Send(nwStream, InternetProtocol.GetFile(), client.Client.RemoteEndPoint, true);
+                if (!client.Connected) return;
+                if (receive)
+                    await InternetProtocol.Receive(client, nwStream, true);
+                else
+                    await InternetProtocol.Send(nwStream, InternetProtocol.GetFile(), client.Client.RemoteEndPoint,true);
 
-                    listener.Stop();
-                    WriteLine("Done!");
-                }
+                listener.Stop();
+                WriteLine("Done!");
             }
             catch (TimeoutException)
             {

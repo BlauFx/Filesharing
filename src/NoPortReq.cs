@@ -39,14 +39,12 @@ namespace Filesharing
 
                 await using NetworkStream nwStream = client.GetStream();
 
-                if (client.Connected)
-                {
-                    if (isSend)
-                        await InternetProtocol.Send(nwStream, fi, client.Client.RemoteEndPoint, true);
-                    else
-                        await InternetProtocol.Receive(client, nwStream, true);
-                    WriteLine("Done!");
-                }
+                if (!client.Connected) return;
+                if (isSend)
+                    await InternetProtocol.Send(nwStream, fi, client.Client.RemoteEndPoint, true);
+                else
+                    await InternetProtocol.Receive(client, nwStream, true);
+                WriteLine("Done!");
             }
             catch (TimeoutException)
             {
