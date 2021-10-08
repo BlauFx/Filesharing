@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 
 namespace Filesharing
@@ -33,23 +33,28 @@ namespace Filesharing
                 "------------------");
 
             var input = Console.ReadLine();
-            foreach (var _ in input!.Where(c => c < '0' || c > '4').Select(c => new { })) return;
 
-            switch (int.Parse(input))
-            {
-                case 1:
-                    new PortReq(false);
-                    break;
-                case 2:
-                    new NoPortReq(false);
-                    break;
-                case 3:
-                    new NoPortReq(true);
-                    break;
-                case 4:
-                    new PortReq(true);
-                    break;
-            }
+	        if (int.TryParse(input, out int num))
+                switch (num)
+                {
+                    case 1:
+                        new PortReq(false);
+                        break;
+                    case 2:
+                        new NoPortReq(false);
+                        break;
+                    case 3:
+                        new NoPortReq(true);
+                        break;
+                    case 4:
+                        new PortReq(true);
+                        break;
+                    default:
+                        Console.WriteLine("Please type in a number between 1 and 4!");
+                        break;
+                }
+            else
+                Console.WriteLine("Please type in a number!");
         }
     }
 }
